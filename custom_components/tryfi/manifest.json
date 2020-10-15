@@ -3,7 +3,7 @@
     "name": "TryFi",
     "documentation": "https://github.com/sbabcock23/hass-pytryfi",
     "requirements": [
-      "pytryfi>=0.0.2"
+      "pytryfi>=0.0.4"
     ],
     "dependencies": [],
     "codeowners": ["@sbabcock23"]
