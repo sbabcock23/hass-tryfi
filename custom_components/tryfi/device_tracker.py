@@ -45,10 +45,11 @@ class TryFiPetTracker():
     def update(self):
         LOGGER.info(f"Updating data for {self.name}")
         self._tryfi = self._hass.data[TRYFI_DOMAIN]
-        for pet in self._tryfi.pets:
-            if self.pet.name == pet.name:
-                self._pet = pet
-                break
+        self._pet = self._tryfi.getPet(self.pet.petId)
+        # for pet in self._tryfi.pets:
+        #     if self.pet.name == pet.name:
+        #         self._pet = pet
+        #         break
     @property
     def name(self):
         return f"{self.pet.name} Tracker"
@@ -64,6 +65,16 @@ class TryFiPetTracker():
     @property
     def entity_picture(self):
         return self.pet.photoLink
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(TRYFI_DOMAIN, self.pet.petId)},
+            "name": self.name,
+            "manufacturer": "TryFi",
+            "model": "Model 1",
+            "sw_version": self.pet.device.buildId,
+            #"via_device": (TRYFI_DOMAIN, self.tryfi)
+        }
     def update(self) -> None:
         dev_id = self.pet.petId
         attrs = {}
@@ -75,4 +86,5 @@ class TryFiPetTracker():
             attributes=attrs,
             icon="mdi:dog"
         )
+    
 

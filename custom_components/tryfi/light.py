@@ -8,6 +8,8 @@ import logging
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
 
+from homeassistant.helpers import device_registry as dr
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -48,10 +50,7 @@ class TryFiPetLight(LightEntity):
         LOGGER.info(f"Updating data for {self.name}")
         #print(self.pet)
         self._tryfi = self._hass.data[TRYFI_DOMAIN]
-        for pet in self._tryfi.pets:
-            if self.pet.name == pet.name:
-                self._pet = pet
-                break
+        self._pet = self._tryfi.getPet(self.pet.petId)
         #print(self.pet)
     @property
     def name(self):
@@ -84,12 +83,12 @@ class TryFiPetLight(LightEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(TRYFI_DOMAIN, self.device_id)},
-            "name": self.pet.name,
+            "identifiers": {(TRYFI_DOMAIN, self.pet.petId)},
+            "name": self.name,
             "manufacturer": "TryFi",
             "model": "Model 1",
             "sw_version": self.pet.device.buildId,
-            "via_device": (TRYFI_DOMAIN, self.tryfi)
+            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
     
     def turn_on(self, **kwargs):

@@ -44,10 +44,8 @@ class TryFiBatterySensor(Entity):
     def update(self):
         LOGGER.info(f"Updating data for {self.name}")
         self._tryfi = self._hass.data[TRYFI_DOMAIN]
-        for pet in self._tryfi.pets:
-            if self.pet.name == pet.name:
-                self._pet = pet
-                break
+        self._pet = self._tryfi.getPet(self.pet.petId)
+
     @property
     def name(self):
         """Return the name of the sensor."""
@@ -89,3 +87,14 @@ class TryFiBatterySensor(Entity):
     @property
     def state(self):
         return self.batteryPercent
+    
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(TRYFI_DOMAIN, self.pet.petId)},
+            "name": self.name,
+            "manufacturer": "TryFi",
+            "model": "Model 1",
+            "sw_version": self.pet.device.buildId,
+            #"via_device": (TRYFI_DOMAIN, self.tryfi)
+        }
