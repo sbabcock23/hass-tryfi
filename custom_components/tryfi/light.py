@@ -1,6 +1,6 @@
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.const import STATE_OK, STATE_PROBLEM, DEVICE_CLASS_BATTERY, PERCENTAGE
-from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED, TryFiCore, TryFiPet
+from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED
 from homeassistant.util import color
 from homeassistant.components.light import LightEntity, SUPPORT_COLOR
 import logging
@@ -9,27 +9,25 @@ from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
 
 from homeassistant.helpers import device_registry as dr
-
+from .const import DOMAIN
 LOGGER = logging.getLogger(__name__)
 
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the sensor platform."""
-    ##add_entities([ExampleSensor()])
-    #tryfi_service = hass.data.get(TRYFI_DOMAIN)
-    
-    tryfi = hass.data[TRYFI_DOMAIN]
+async def async_setup_entry(hass, config_entry, async_add_devices):
+    """Add sensors for passed config_entry in HA."""
+    tryfi = hass.data[DOMAIN][config_entry.entry_id]
 
-    for pet in tryfi._pets:
-        LOGGER.info(f"Setting up Ligh entity for Pet: {pet.name}")
-        add_entities([TryFiPetLight(hass, pet, tryfi)])
+    new_devices = []
+    for pet in tryfi.pets:
+        new_devices.append(TryFiPetLight(hass, tryfi, pet))
+    if new_devices:
+        async_add_devices(new_devices)
 
 class TryFiPetLight(LightEntity):
-    def __init__(self, hass, pet, tryfi):
+    def __init__(self, hass, tryfi, pet):
         self._pet = pet
         self._tryfi = tryfi
         self._hass = hass
-        #super().__init__(hass, tryfi)
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -49,14 +47,15 @@ class TryFiPetLight(LightEntity):
     def update(self):
         LOGGER.info(f"Updating data for {self.name}")
         #print(self.pet)
-        self._tryfi = self._hass.data[TRYFI_DOMAIN]
-        self._pet = self._tryfi.getPet(self.pet.petId)
+        #self._tryfi = self._hass.data[DOMAIN]
+        #self._pet = self._tryfi.getPet(self.pet.petId)
         #print(self.pet)
     @property
     def name(self):
         return f"{self.pet.name} - Collar Light"
     @property
     def unique_id(self):
+        print(self.pet)
         return f"{self.pet.petId}-light"
     @property
     def device_id(self):
@@ -80,13 +79,14 @@ class TryFiPetLight(LightEntity):
     @property
     def supported_features(self):
         return SUPPORT_COLOR
+
     @property
     def device_info(self):
         return {
-            "identifiers": {(TRYFI_DOMAIN, self.pet.petId)},
-            "name": self.name,
+            "identifiers": {(DOMAIN, self.pet.petId)},
+            "name": self.pet.name,
             "manufacturer": "TryFi",
-            "model": "Model 1",
+            "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
             #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }

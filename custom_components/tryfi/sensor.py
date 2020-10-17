@@ -5,18 +5,20 @@ from homeassistant.const import STATE_OK, STATE_PROBLEM, DEVICE_CLASS_BATTERY, P
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
 import logging
-from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED, TryFiCore, TryFiPet
+from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED
+from .const import DOMAIN
 LOGGER = logging.getLogger(__name__)
 
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the sensor platform."""
-    ##add_entities([ExampleSensor()])
-    #tryfi_service = hass.data.get(TRYFI_DOMAIN)
-    tryfi = hass.data[TRYFI_DOMAIN]
+async def async_setup_entry(hass, config_entry, async_add_devices):
+    """Add sensors for passed config_entry in HA."""
+    tryfi = hass.data[DOMAIN][config_entry.entry_id]
 
-    for pet in tryfi._pets:
-        add_entities([TryFiBatterySensor(hass, tryfi, pet)])
+    new_devices = []
+    for pet in tryfi.pets:
+        new_devices.append(TryFiBatterySensor(hass, tryfi, pet))
+    if new_devices:
+        async_add_devices(new_devices)
 
 class TryFiBatterySensor(Entity):
     """Representation of a Sensor."""
@@ -42,9 +44,9 @@ class TryFiBatterySensor(Entity):
         return True
     
     def update(self):
-        LOGGER.info(f"Updating data for {self.name}")
-        self._tryfi = self._hass.data[TRYFI_DOMAIN]
-        self._pet = self._tryfi.getPet(self.pet.petId)
+        LOGGER.info(f"Updating data for {self.name}\n {self._hass.data[DOMAIN]}")
+        #self._tryfi = self._hass.data[DOMAIN]
+        #self._pet = self._tryfi.getPet(self.pet.petId)
 
     @property
     def name(self):
@@ -91,10 +93,10 @@ class TryFiBatterySensor(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(TRYFI_DOMAIN, self.pet.petId)},
-            "name": self.name,
+            "identifiers": {(DOMAIN, self.pet.petId)},
+            "name": self.pet.name,
             "manufacturer": "TryFi",
-            "model": "Model 1",
+            "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
             #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }

@@ -1,6 +1,7 @@
 {
     "domain": "tryfi",
     "name": "TryFi",
+    "config_flow": true,
     "documentation": "https://github.com/sbabcock23/hass-pytryfi",
     "requirements": [
       "pytryfi>=0.0.4"

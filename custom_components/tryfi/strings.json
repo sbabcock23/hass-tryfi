@@ -1,0 +1,26 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "title": "Connect to the TryFi",
+          "description": "Enter in username and password to connect to tryFi",
+          "data": {
+            "username": "username",
+            "password": "password"
+          }
+        }
+      },
+      "error": {
+        "cannot_connect": "Failed to connect, please try again"
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "data": {
+            "pollingFrequency": "10"
+          }
+        }
+      }
+    }
+  }
