@@ -9,60 +9,54 @@ from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
 
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
+from datetime import datetime, timedelta
 from .const import DOMAIN
 LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
-    tryfi = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
+    tryfi = coordinator.data
+    
     new_devices = []
     for pet in tryfi.pets:
-        new_devices.append(TryFiPetLight(hass, tryfi, pet))
+        new_devices.append(TryFiPetLight(hass, pet, coordinator))
     if new_devices:
         async_add_devices(new_devices)
 
-class TryFiPetLight(LightEntity):
-    def __init__(self, hass, tryfi, pet):
-        self._pet = pet
-        self._tryfi = tryfi
+class TryFiPetLight(CoordinatorEntity, LightEntity):
+    def __init__(self, hass, pet, coordinator):
+        self._petId = pet.petId
+        #self._tryfi = tryfi
         self._hass = hass
+        #self._coordinator = coordinator
+        super().__init__(coordinator)
 
-    async def async_added_to_hass(self):
-        """Register callbacks."""
-        # register callback when data has been updated
-        LOGGER.info(f"Notifying update for data for {self.name}")
-        async_dispatcher_connect(self._hass, TRYFI_FLAG_UPDATED, self._update_callback)       
-    @callback
-    def _update_callback(self):
-        """Call update method."""
-        LOGGER.info(f"Scheduling update for data for {self.name}")
-        self.async_schedule_update_ha_state(True)
-    @property
-    def should_poll(self):
-        """Updates occur periodically from __init__ when changes detected"""
-        return True
-    
-    def update(self):
-        LOGGER.info(f"Updating data for {self.name}")
-        #print(self.pet)
-        #self._tryfi = self._hass.data[DOMAIN]
-        #self._pet = self._tryfi.getPet(self.pet.petId)
-        #print(self.pet)
     @property
     def name(self):
         return f"{self.pet.name} - Collar Light"
     @property
+    def petId(self):
+        return self._petId
+    @property
+    def pet(self):
+        return self.coordinator.data.getPet(self.petId)
+    @property
+    def tryfi(self):
+        return self.coordinator.data
+    @property
     def unique_id(self):
-        print(self.pet)
         return f"{self.pet.petId}-light"
     @property
     def device_id(self):
         return self.unique_id
-    @property
-    def pet(self):
-        return self._pet
     @property
     def is_on(self):
         return bool(self.pet.device.ledOn)
@@ -70,12 +64,6 @@ class TryFiPetLight(LightEntity):
     #def hs_color(self):
     #    colorObj = color(self.pet.device.ledColor)
     #    return colorObj.hsl
-    @property
-    def tryfi(self):
-        return self._tryfi
-    @property
-    def pet(self):
-        return self._pet
     @property
     def supported_features(self):
         return SUPPORT_COLOR
@@ -91,7 +79,11 @@ class TryFiPetLight(LightEntity):
             #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
     
+    #Fix later, request update
     def turn_on(self, **kwargs):
         self.pet.turnOnOffLed(self.tryfi.session, "ON")
+        #self.coordinator.async_request_refresh()
+
     def turn_off(self, **kwargs):
         self.pet.turnOnOffLed(self.tryfi.session, "OFF")
+        #self.coordinator.async_request_refresh()

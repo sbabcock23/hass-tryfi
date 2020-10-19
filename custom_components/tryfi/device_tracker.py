@@ -4,57 +4,42 @@ from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
 from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
-
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 import logging
 from . import DOMAIN, TRYFI_FLAG_UPDATED
 LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
-    tryfi = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+
+    tryfi = coordinator.data
 
     new_devices = []
     for pet in tryfi.pets:
-        new_devices.append(TryFiPetTracker(async_add_devices, hass, tryfi, pet))
+        new_devices.append(TryFiPetTracker(async_add_devices, hass, pet, coordinator))
     if new_devices:
         async_add_devices(new_devices, True)
 
-class TryFiPetTracker(TrackerEntity):
-    def __init__(self, see, hass, tryfi, pet):
-        self._pet = pet
+class TryFiPetTracker(CoordinatorEntity, TrackerEntity):
+    def __init__(self, see, hass, pet, coordinator):
+        self._petId = pet.petId
         self._see = see
-        self._hass = hass
-        self._tryfi = tryfi
+        super().__init__(coordinator)
 
-    async def async_added_to_hass(self):
-        """Register callbacks."""
-        # register callback when data has been updated
-        LOGGER.info(f"Notifying update for data for {self.name}")
-        async_dispatcher_connect(self._hass, TRYFI_FLAG_UPDATED, self._update_callback)       
-    @callback
-    def _update_callback(self):
-        """Call update method."""
-        LOGGER.info(f"Scheduling update for data for {self.name}")
-        self.async_schedule_update_ha_state(True)
-    @property
-    def should_poll(self):
-        """Updates occur periodically from __init__ when changes detected"""
-        return True
-    
-    def update(self):
-        LOGGER.info(f"Updating data for {self.name}")
-        #self._tryfi = self._hass.data[DOMAIN]
-        #self._pet = self._tryfi.getPet(self.pet.petId)
-        # for pet in self._tryfi.pets:
-        #     if self.pet.name == pet.name:
-        #         self._pet = pet
-        #         break
     @property
     def name(self):
         return f"{self.pet.name} Tracker"
     @property
     def pet(self):
-        return self._pet
+        return self.coordinator.data.getPet(self.petId)
+    @property
+    def petId(self):
+        return self._petId
     @property
     def unique_id(self):
         return f"{self.pet.petId}-tracker"

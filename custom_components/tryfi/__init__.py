@@ -8,6 +8,12 @@ from homeassistant.helpers.event import track_time_interval
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant import exceptions
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 
 from .const import DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_POLLING_RATE, DEFAULT_POLLING_RATE
 import logging
@@ -24,7 +30,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 PLATFORMS = ["device_tracker", "light", "sensor"]
-#PLATFORMS = ["sensor"]
+#PLATFORMS = ["light", "sensor"]
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -41,21 +47,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hello World from a config entry."""
     # Store an instance of the "connecting" class that does the work of speaking
     # with your actual devices.
-    hass.data[DOMAIN][entry.entry_id] = PyTryFi(username=entry.data["username"], password=entry.data["password"])
+    tryfi = PyTryFi(username=entry.data["username"], password=entry.data["password"])
+    hass.data[DOMAIN][entry.entry_id] = tryfi
 
-    print(hass.data[DOMAIN][entry.entry_id])
+    coordinator = TryFiDataUpdateCoordinator(hass, tryfi)
+    await coordinator.async_refresh()
     
-    # def refresh_all_data(event_time):
-        
-    #     hass.data[DOMAIN][entry.entry_id].updatePets()
-    #     hass.data[DOMAIN][entry.entry_id].updateBases()
-    #     dispatcher_send(hass, TRYFI_FLAG_UPDATED)
-    #     #print(f"Refreshing data for TRYFI {event_time}\n{hass.data[TRYFI_DOMAIN]}")
+    if not coordinator.last_update_success:
+        raise ConfigEntryNotReady
 
-    # hass.services.register(DOMAIN, 'update', refresh_all_data)
-    # # automatically update ADTPulse data (samples) on the scan interval
-    # scan_interval = timedelta(seconds = 10)
-    # track_time_interval(hass, refresh_all_data, scan_interval)
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # This creates each HA object for each platform your device requires.
     # It's done by calling the `async_setup_entry` function in each platform module.
@@ -98,3 +100,32 @@ async def async_connect_or_timeout(hass, tryfi):
 
 class CannotConnect(exceptions.HomeAssistantError):
     """Error to indicate we cannot connect."""
+
+class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
+    """Class to manage the refresh of the tryfi data api"""
+
+    def __init__(self, hass, tryfi):
+        self._tryfi = tryfi
+
+        super().__init__(
+            hass,
+            LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=10),
+        )
+    @property
+    def tryfi(self):
+        return self._tryfi
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        try:
+            #result = await hass.async_add_executor_job(self.tryfi.updatePets())
+            self.tryfi.updatePets()
+            self.tryfi.updateBases()
+            #future enhancement
+            #self.tryfi.updateAll()
+        except Exception as error:
+            print("error updating")
+            raise UpdateFailed(error) from error
+        return self.tryfi

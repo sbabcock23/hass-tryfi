@@ -1,52 +1,167 @@
 """Platform for sensor integration."""
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
-from homeassistant.const import STATE_OK, STATE_PROBLEM, DEVICE_CLASS_BATTERY, PERCENTAGE
+from homeassistant.const import STATE_OK, STATE_PROBLEM, DEVICE_CLASS_BATTERY, PERCENTAGE, LENGTH_KILOMETERS
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 import logging
 from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED
-from .const import DOMAIN
+from .const import DOMAIN, SENSOR_STATS_BY_TIME, SENSOR_STATS_BY_TYPE
 LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
-    tryfi = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+
+    tryfi = coordinator.data
 
     new_devices = []
     for pet in tryfi.pets:
-        new_devices.append(TryFiBatterySensor(hass, tryfi, pet))
+        new_devices.append(TryFiBatterySensor(hass, pet, coordinator))
+        for statType in SENSOR_STATS_BY_TYPE:
+            for statTime in SENSOR_STATS_BY_TIME:
+                new_devices.append(PetStatsSensor(hass, pet, coordinator, statType, statTime))
+    for base in tryfi.bases:
+        new_devices.append(TryFiBaseSensor(hass, base, coordinator))
     if new_devices:
         async_add_devices(new_devices)
 
-class TryFiBatterySensor(Entity):
-    """Representation of a Sensor."""
-    def __init__(self, hass, tryfi, pet):
+class TryFiBaseSensor(CoordinatorEntity, Entity):
+    def __init__(self, hass, base, coordinator):
         self._hass = hass
-        self._pet = pet
-        self._tryfi = tryfi
-        #super().__init__(hass,tryfi,pet)
-
-    async def async_added_to_hass(self):
-        """Register callbacks."""
-        # register callback when data has been updated
-        LOGGER.info(f"Notifying update for data for {self.name}")
-        async_dispatcher_connect(self._hass, TRYFI_FLAG_UPDATED, self._update_callback)       
-    @callback
-    def _update_callback(self):
-        """Call update method."""
-        LOGGER.info(f"Scheduling update for data for {self.name}")
-        self.async_schedule_update_ha_state(True)
+        self._baseId = base.baseId
+        super().__init__(coordinator)
     @property
-    def should_poll(self):
-        """Updates occur periodically from __init__ when changes detected"""
-        return True
-    
-    def update(self):
-        LOGGER.info(f"Updating data for {self.name}\n {self._hass.data[DOMAIN]}")
-        #self._tryfi = self._hass.data[DOMAIN]
-        #self._pet = self._tryfi.getPet(self.pet.petId)
+    def name(self):
+        """Return the name of the sensor."""
+        return f"{self.base.name}"
+    @property
+    def unique_id(self):
+        """Return the ID of this sensor."""
+        return f"{self.base.baseId}"
+    @property
+    def baseId(self):
+        return self._baseId
+    @property
+    def base(self):
+        return self.coordinator.data.bases[0]
+    @property
+    def device_id(self):
+        return self.unique_id
+    @property
+    def device_class(self):
+        """Return the device class of the sensor."""
+        return None
+    @property
+    def state(self):
+        if (self.base.online):
+            return "Online"
+        else:
+            return "Offline"
+    @property
+    def icon(self):
+        return "mdi:wifi"
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.base.baseId)},
+            "name": self.base.name,
+            "manufacturer": "TryFi",
+            "model": "TryFi Base",
+            #"sw_version": self.pet.device.buildId,
+            #"via_device": (TRYFI_DOMAIN, self.tryfi)
+        }
+
+class PetStatsSensor(CoordinatorEntity, Entity):
+    """Representation of a Sensor."""
+    def __init__(self, hass, pet, coordinator, statType, statTime):
+        self._hass = hass
+        self._petId = pet.petId
+        self._statType = statType
+        self._statTime = statTime
+        super().__init__(coordinator)
+
+    @property
+    def statType(self):
+        return self._statType
+    @property
+    def statTime(self):
+        return self._statTime
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return f"{self.pet.name} {self.statTime.title()} {self.statType.title()}"
+    @property
+    def unique_id(self):
+        """Return the ID of this sensor."""
+        return f"{self.pet.petId}-{self.statTime.lower()}-{self.statType.lower()}"
+    @property
+    def petId(self):
+        return self._petId
+    @property
+    def pet(self):
+        return self.coordinator.data.getPet(self.petId)
+    @property
+    def device(self):
+        return self.pet.device
+    @property
+    def device_id(self):
+        return self.unique_id
+    @property
+    def device_class(self):
+        """Return the device class of the sensor."""
+        return None
+    @property
+    def icon(self):
+        return "mdi:map-marker-distance"
+    @property
+    def state(self):
+        if self.statType.upper() == "STEPS":
+            if self.statTime.upper() == "DAILY":
+                return self.pet.dailySteps
+            elif self.statTime.upper() == "WEEKLY":
+                return self.pet.weeklySteps
+            elif self.statTime.upper() == "MONTHLY":
+                return self.pet.monthlySteps
+        elif self.statType.upper() == "DISTANCE":
+            if self.statTime.upper() == "DAILY":
+                return round(self.pet.dailyTotalDistance/1000, 2)
+            elif self.statTime.upper() == "WEEKLY":
+                return round(self.pet.weeklyTotalDistance/1000, 2)
+            elif self.statTime.upper() == "MONTHLY":
+                return round(self.pet.monthlyTotalDistance/1000, 2)
+        else:
+            return None
+    @property
+    def unit_of_measurement(self):
+        """Return the unit_of_measurement of the device."""
+        if self.statType.upper() == "DISTANCE":
+            return LENGTH_KILOMETERS
+        else:
+            return None
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.pet.petId)},
+            "name": self.pet.name,
+            "manufacturer": "TryFi",
+            "model": self.pet.breed,
+            "sw_version": self.pet.device.buildId,
+            #"via_device": (TRYFI_DOMAIN, self.tryfi)
+        }
+
+class TryFiBatterySensor(CoordinatorEntity, Entity):
+    """Representation of a Sensor."""
+    def __init__(self, hass, pet, coordinator):
+        self._hass = hass
+        self._petId = pet.petId
+        super().__init__(coordinator)
 
     @property
     def name(self):
@@ -57,8 +172,11 @@ class TryFiBatterySensor(Entity):
         """Return the ID of this sensor."""
         return f"{self.pet.petId}-battery"
     @property
+    def petId(self):
+        return self._petId
+    @property
     def pet(self):
-        return self._pet
+        return self.coordinator.data.getPet(self.petId)
     @property
     def device(self):
         return self.pet.device
