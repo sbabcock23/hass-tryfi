@@ -81,9 +81,9 @@ class TryFiPetLight(CoordinatorEntity, LightEntity):
     
     #Fix later, request update
     def turn_on(self, **kwargs):
-        self.pet.turnOnOffLed(self.tryfi.session, "ON")
+        self.pet.turnOnOffLed(self.tryfi.session, True)
         #self.coordinator.async_request_refresh()
 
     def turn_off(self, **kwargs):
-        self.pet.turnOnOffLed(self.tryfi.session, "OFF")
+        self.pet.turnOnOffLed(self.tryfi.session, False)
         #self.coordinator.async_request_refresh()

@@ -48,6 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Store an instance of the "connecting" class that does the work of speaking
     # with your actual devices.
     tryfi = PyTryFi(username=entry.data["username"], password=entry.data["password"])
+    #tryfi = await hass.async_add_executor_job(sync_io_PyTry)
     hass.data[DOMAIN][entry.entry_id] = tryfi
 
     coordinator = TryFiDataUpdateCoordinator(hass, tryfi)
@@ -106,6 +107,7 @@ class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass, tryfi):
         self._tryfi = tryfi
+        self._hass = hass
 
         super().__init__(
             hass,
@@ -120,11 +122,8 @@ class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         try:
-            #result = await hass.async_add_executor_job(self.tryfi.updatePets())
-            self.tryfi.updatePets()
-            self.tryfi.updateBases()
-            #future enhancement
-            #self.tryfi.updateAll()
+            await self._hass.async_add_executor_job(self.tryfi.updatePets)
+            await self._hass.async_add_executor_job(self.tryfi.updateBases)
         except Exception as error:
             print("error updating")
             raise UpdateFailed(error) from error

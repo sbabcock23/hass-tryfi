@@ -50,6 +50,7 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
         return self._baseId
     @property
     def base(self):
+        #FIX - need to update interface with getbase class
         return self.coordinator.data.bases[0]
     @property
     def device_id(self):
