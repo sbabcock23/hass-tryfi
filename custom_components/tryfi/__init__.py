@@ -122,9 +122,10 @@ class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         try:
-            await self._hass.async_add_executor_job(self.tryfi.updatePets)
-            await self._hass.async_add_executor_job(self.tryfi.updateBases)
+            #await self._hass.async_add_executor_job(self.tryfi.updatePets)
+            #await self._hass.async_add_executor_job(self.tryfi.updateBases)
+            await self._hass.async_add_executor_job(self.tryfi.update)
         except Exception as error:
-            print("error updating")
+            LOGGER.error("Error updating TryFi data\n{error}")
             raise UpdateFailed(error) from error
         return self.tryfi
