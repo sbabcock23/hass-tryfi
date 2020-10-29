@@ -29,7 +29,7 @@ REFRESH_TIME = 60
 LOGGER = logging.getLogger(__name__)
 
 
-PLATFORMS = ["device_tracker", "light", "sensor"]
+PLATFORMS = ["device_tracker", "light", "sensor", "lock"]
 #PLATFORMS = ["light", "sensor"]
 
 
