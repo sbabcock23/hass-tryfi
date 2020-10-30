@@ -15,7 +15,7 @@ Current functionality includes:
 ## Pre-Requisities
 * Home Assistant >= 0.0.117
 * TryFi dog collar with active cellular subscription
-* [HACS}(https://github.com/custom-components/hacs) is already installed
+* [HACS](https://github.com/custom-components/hacs) is already installed
 
 ## Installation Methods
 
