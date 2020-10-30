@@ -3,6 +3,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![](https://img.shields.io/github/license/sbabcock23/hass-tryfi?style=for-the-badge)](LICENSE)
 [![](https://img.shields.io/github/workflow/status/sbabcock23/hass-tryfi/Python%20package?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/actions)
+
 This allows you to integrate [TryFi](https://tryfi.com) Smart GPS Collars with Home Assistant. 
 
 ## Features
@@ -103,3 +104,7 @@ Turns on the collar light after dark if the pet is not home.
 # Future Enhacements
 * Allow for the selection of the LED light color
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
+
+# Version History
+## 0.0.1
+* Initial Release with basic functionality including light on/off, device tracker, lock mode of dog and general stats
