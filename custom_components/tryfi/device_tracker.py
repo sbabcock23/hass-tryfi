@@ -2,60 +2,44 @@ from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.const import STATE_OK, STATE_PROBLEM, DEVICE_CLASS_BATTERY, PERCENTAGE
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
+from homeassistant.components.device_tracker.config_entry import TrackerEntity
+from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 import logging
-from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED, TryFiCore, TryFiPet
+from .const import DOMAIN
 LOGGER = logging.getLogger(__name__)
 
-def setup_scanner(hass, config, add_entities, discovery_info=None):
-    """Set up the sensor platform."""
-    ##add_entities([ExampleSensor()])
-    #tryfi_service = hass.data.get(TRYFI_DOMAIN)
-    tryfi = hass.data[TRYFI_DOMAIN]
-    
-    for pet in tryfi._pets:
-        tracker = TryFiPetTracker(add_entities, hass, tryfi, pet)
-        tracker.update()
-        add_entities(tracker)
+async def async_setup_entry(hass, config_entry, async_add_devices):
+    """Add sensors for passed config_entry in HA."""
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
+    tryfi = coordinator.data
 
-class TryFiPetTracker():
-    def __init__(self, see, hass, tryfi, pet):
-        self._pet = pet
+    new_devices = []
+    for pet in tryfi.pets:
+        new_devices.append(TryFiPetTracker(async_add_devices, hass, pet, coordinator))
+    if new_devices:
+        async_add_devices(new_devices, True)
+
+class TryFiPetTracker(CoordinatorEntity, TrackerEntity):
+    def __init__(self, see, hass, pet, coordinator):
+        self._petId = pet.petId
         self._see = see
-        self._hass = hass
-        self._tryfi = tryfi
-        #super().__init__(hass, tryfi, pet)
-        print (self.pet)
-        print (self._see)
-    async def async_added_to_hass(self):
-        """Register callbacks."""
-        # register callback when data has been updated
-        LOGGER.info(f"Notifying update for data for {self.name}")
-        async_dispatcher_connect(self._hass, TRYFI_FLAG_UPDATED, self._update_callback)       
-    @callback
-    def _update_callback(self):
-        """Call update method."""
-        LOGGER.info(f"Scheduling update for data for {self.name}")
-        self.async_schedule_update_ha_state(True)
-    @property
-    def should_poll(self):
-        """Updates occur periodically from __init__ when changes detected"""
-        return True
-    
-    def update(self):
-        LOGGER.info(f"Updating data for {self.name}")
-        self._tryfi = self._hass.data[TRYFI_DOMAIN]
-        self._pet = self._tryfi.getPet(self.pet.petId)
-        # for pet in self._tryfi.pets:
-        #     if self.pet.name == pet.name:
-        #         self._pet = pet
-        #         break
+        super().__init__(coordinator)
+
     @property
     def name(self):
         return f"{self.pet.name} Tracker"
     @property
     def pet(self):
-        return self._pet
+        return self.coordinator.data.getPet(self.petId)
+    @property
+    def petId(self):
+        return self._petId
     @property
     def unique_id(self):
         return f"{self.pet.petId}-tracker"
@@ -66,25 +50,25 @@ class TryFiPetTracker():
     def entity_picture(self):
         return self.pet.photoLink
     @property
+    def latitude(self):
+        return float(self.pet.currLatitude)
+    @property
+    def longitude(self):
+        return float(self.pet.currLongitude)
+    @property
+    def source_type(self):
+        """Return the source type, eg gps or router, of the device."""
+        return SOURCE_TYPE_GPS
+    @property
+    def battery_level(self):
+        return self.pet.device.batteryPercent
+
+    @property
     def device_info(self):
         return {
-            "identifiers": {(TRYFI_DOMAIN, self.pet.petId)},
-            "name": self.name,
+            "identifiers": {(DOMAIN, self.pet.petId)},
+            "name": self.pet.name,
             "manufacturer": "TryFi",
-            "model": "Model 1",
+            "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
-    def update(self) -> None:
-        dev_id = self.pet.petId
-        attrs = {}
-        gps = [float(self.pet.currLatitude), float(self.pet.currLongitude)]
-        self._see(
-            dev_id = dev_id,
-            host_name=self.pet.name,
-            gps=gps,
-            attributes=attrs,
-            icon="mdi:dog"
-        )
-    
-
