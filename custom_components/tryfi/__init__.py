@@ -15,43 +15,22 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .const import DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_POLLING_RATE, DEFAULT_POLLING_RATE
+from .const import DOMAIN, PLATFORMS, CONF_USERNAME, CONF_PASSWORD, CONF_POLLING_RATE, DEFAULT_POLLING_RATE
 import logging
 from datetime import timedelta
 from pytryfi import PyTryFi
 
-TRYFI_DOMAIN = "tryfi"
-TRYFI_SERVICE = "tryfi_service"
-TRYFI_FLAG_UPDATED = 'tryfi_updated'
-
-REFRESH_TIME = 60
-
 LOGGER = logging.getLogger(__name__)
 
-
-PLATFORMS = ["device_tracker", "light", "sensor", "lock"]
-#PLATFORMS = ["light", "sensor"]
-
-
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the Hello World component."""
-    # Ensure our name space for storing objects is a known type. A dict is
-    # common/preferred as it allows a separate instance of your class for each
-    # instance that has been created in the UI.
     hass.data.setdefault(DOMAIN, {})
-
     return True
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Hello World from a config entry."""
-    # Store an instance of the "connecting" class that does the work of speaking
-    # with your actual devices.
     tryfi = PyTryFi(username=entry.data["username"], password=entry.data["password"])
-    #tryfi = await hass.async_add_executor_job(sync_io_PyTry)
     hass.data[DOMAIN][entry.entry_id] = tryfi
 
-    coordinator = TryFiDataUpdateCoordinator(hass, tryfi)
+    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
     await coordinator.async_refresh()
     
     if not coordinator.last_update_success:
@@ -91,7 +70,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_connect_or_timeout(hass, tryfi):
     userId = None
     try:
-        print(tryfi)
         userId = tryfi._userId
         if userId != None or "":
             LOGGER.info("Success Connecting to TryFi")
@@ -105,25 +83,26 @@ class CannotConnect(exceptions.HomeAssistantError):
 class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage the refresh of the tryfi data api"""
 
-    def __init__(self, hass, tryfi):
+    def __init__(self, hass, tryfi, pollingRate):
         self._tryfi = tryfi
         self._hass = hass
-
+        self._pollingRate = int(pollingRate)
         super().__init__(
             hass,
             LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=10),
+            update_interval=timedelta(seconds=pollingRate),
         )
     @property
     def tryfi(self):
         return self._tryfi
+    @property
+    def pollingRate(self):
+        return self._pollingRate
 
     async def _async_update_data(self):
         """Update data via library."""
         try:
-            #await self._hass.async_add_executor_job(self.tryfi.updatePets)
-            #await self._hass.async_add_executor_job(self.tryfi.updateBases)
             await self._hass.async_add_executor_job(self.tryfi.update)
         except Exception as error:
             LOGGER.error("Error updating TryFi data\n{error}")

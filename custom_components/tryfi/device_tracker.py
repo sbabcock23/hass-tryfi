@@ -10,7 +10,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 import logging
-from . import DOMAIN, TRYFI_FLAG_UPDATED
+from .const import DOMAIN
 LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -71,5 +71,4 @@ class TryFiPetTracker(CoordinatorEntity, TrackerEntity):
             "manufacturer": "TryFi",
             "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }

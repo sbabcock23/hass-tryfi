@@ -10,7 +10,6 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 import logging
-from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED
 from .const import DOMAIN, SENSOR_STATS_BY_TIME, SENSOR_STATS_BY_TYPE
 LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +75,6 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
             "manufacturer": "TryFi",
             "model": "TryFi Base",
             #"sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
 
 class PetStatsSensor(CoordinatorEntity, Entity):
@@ -154,7 +152,6 @@ class PetStatsSensor(CoordinatorEntity, Entity):
             "manufacturer": "TryFi",
             "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
 
 class TryFiBatterySensor(CoordinatorEntity, Entity):
@@ -217,5 +214,4 @@ class TryFiBatterySensor(CoordinatorEntity, Entity):
             "manufacturer": "TryFi",
             "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }

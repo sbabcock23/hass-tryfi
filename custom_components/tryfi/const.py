@@ -1,7 +1,7 @@
 DOMAIN="tryfi"
-COMPONENTS=["light"]
+PLATFORMS = ["device_tracker", "light", "sensor", "lock"]
 DEFAULT_POLLING_RATE="10"
-CONF_POLLING_RATE=30
+CONF_POLLING_RATE="polling"
 CONF_USERNAME="username"
 CONF_PASSWORD="password"
 SENSOR_STATS_BY_TIME=[

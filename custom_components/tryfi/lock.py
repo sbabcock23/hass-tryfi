@@ -62,7 +62,6 @@ class TryFiLock(CoordinatorEntity, LockEntity):
             "manufacturer": "TryFi",
             "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
     # dog is home then its "locked"
     def lock(self, **kwargs):

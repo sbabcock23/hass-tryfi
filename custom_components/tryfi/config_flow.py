@@ -4,6 +4,7 @@ import voluptuous as vol
 from homeassistant import config_entries, core, exceptions
 from .const import DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_POLLING_RATE, DEFAULT_POLLING_RATE  # pylint:disable=unused-import
 from . import CannotConnect, async_connect_or_timeout
+from homeassistant.core import callback
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,17 +23,22 @@ DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
-        #vol.Optional(CONF_POLLING_RATE, default=DEFAULT_POLLING_RATE): str,
+        vol.Optional(CONF_POLLING_RATE, default=DEFAULT_POLLING_RATE): str,
     }
 )
 
 
 async def validate_input(hass: core.HomeAssistant, data: dict):
-
-    print(data[CONF_USERNAME])
-    print(data[CONF_PASSWORD])
-    tryfi = PyTryFi(username=data[CONF_USERNAME],password=data[CONF_PASSWORD])
-    print(tryfi)
+    try:
+        pollingInt = int(data[CONF_POLLING_RATE])
+        if pollingInt < 1:
+            raise InvalidPolling
+    except:
+        raise InvalidPolling
+    try:
+        tryfi = PyTryFi(username=data[CONF_USERNAME],password=data[CONF_PASSWORD])
+    except:
+        raise CannotConnect
 
     info = await async_connect_or_timeout(hass, tryfi)
 
@@ -49,6 +55,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # changes.
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler(config_entry)
+
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         # This goes through the steps to take the user through the setup process.
@@ -63,6 +75,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 info = await validate_input(self.hass, user_input)
 
                 return self.async_create_entry(title=info["title"], data=user_input)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except InvalidPolling:
+                errors["base"] = "invalid_polling"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
@@ -71,3 +87,34 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options."""
+
+    def __init__(self, config_entry):
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_POLLING_RATE,
+                        default=self.config_entry.options.get(
+                            CONF_POLLING_RATE, DEFAULT_POLLING_RATE
+                        ),
+                    ): str,
+                }
+            ),
+        )
+
+class InvalidPolling(exceptions.HomeAssistantError):
+    """Error to indicate we cannot use the polling rate"""
+class CannotConnect(exceptions.HomeAssistantError):
+    """Error to indicate we cannot use the polling rate"""

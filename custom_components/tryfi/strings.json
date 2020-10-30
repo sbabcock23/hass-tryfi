@@ -1,26 +1,29 @@
 {
-    "config": {
-      "step": {
-        "user": {
-          "title": "Connect to the TryFi",
-          "description": "Enter in username and password to connect to tryFi",
-          "data": {
-            "username": "username",
-            "password": "password"
-          }
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]"
         }
-      },
-      "error": {
-        "cannot_connect": "Failed to connect, please try again"
       }
     },
-    "options": {
-      "step": {
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_polling": "[%key:common::config_flow::error::invalid_polling%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  },
+  "options": {
+    "step": {
         "init": {
-          "data": {
-            "pollingFrequency": "10"
-          }
+            "data": {
+                "polling": "Polling"
+            }
         }
-      }
     }
   }
+}

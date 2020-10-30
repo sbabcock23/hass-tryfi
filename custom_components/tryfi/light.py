@@ -1,6 +1,5 @@
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.const import STATE_OK, STATE_PROBLEM, DEVICE_CLASS_BATTERY, PERCENTAGE
-from . import TRYFI_DOMAIN, TRYFI_FLAG_UPDATED
 from homeassistant.util import color
 from homeassistant.components.light import LightEntity, SUPPORT_COLOR
 import logging
@@ -64,9 +63,9 @@ class TryFiPetLight(CoordinatorEntity, LightEntity):
     #def hs_color(self):
     #    colorObj = color(self.pet.device.ledColor)
     #    return colorObj.hsl
-    @property
-    def supported_features(self):
-        return SUPPORT_COLOR
+    #@property
+    #def supported_features(self):
+    #    return SUPPORT_COLOR
 
     @property
     def device_info(self):
@@ -76,7 +75,6 @@ class TryFiPetLight(CoordinatorEntity, LightEntity):
             "manufacturer": "TryFi",
             "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
-            #"via_device": (TRYFI_DOMAIN, self.tryfi)
         }
     
     #Fix later, request update

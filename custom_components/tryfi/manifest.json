@@ -4,7 +4,7 @@
     "config_flow": true,
     "documentation": "https://github.com/sbabcock23/hass-pytryfi",
     "requirements": [
-      "pytryfi>=0.0.7"
+      "pytryfi>=0.0.8"
     ],
     "dependencies": [],
     "codeowners": ["@sbabcock23"]
