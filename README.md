@@ -44,25 +44,31 @@ Current functionality includes:
 
 ## Validation
 Once you have added the integration, you will see 1 or more devices and entities associated with this integration. To validate its accuracy, you can review the steps and distance counters for your pet or its current whereabouts.
+
 ![Integration](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/tryfiaftersetup.jpg?raw=true)
 
 ### Dog Device and Entities
 #### Device
+
 ![Dog Device](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/dogdevice.jpg?raw=true)
 
 #### Entities
+
 ![Dog Entities](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/dogentities.jpg?raw=true)
 
 ### Base Device and Entities
+
 ![Base Device and Entities](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/dogbase.jpg?raw=true)
 
 # How to Use
 ## Light Collar
 The light on your Pet's collar is represented as a light switch in HA. It can either be turned on or off. 
+
 ![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/doglight.jpg?raw=true)
 
 ## Lost Dog Mode
 TryFi is equiped with a "Lost Dog Mode" functionality. In HA this is represented by a "lock" device similar to a lock in your home. If the pet is "locked" then everything is safe and secure. If the pet is unlocked then it must be lost :(
+
 ![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/doglostmode.jpg?raw=true)
 
 # Lovelace
@@ -123,3 +129,7 @@ Turns on the collar light after dark if the pet is not home.
 # Version History
 ## 0.0.1
 * Initial Release with basic functionality including light on/off, device tracker, lock mode of dog and general stats
+
+# Links
+* [Python TryFi Interface](https://github.com/sbabcock23/pytryfi)
+* [TryFi]((https://tryfi.com/))
