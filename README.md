@@ -1,8 +1,10 @@
 # TryFi for Home Assistant
+![beta_badge](https://img.shields.io/badge/maturity-Beta-yellow.png?style=for-the-badge)
 [![](https://img.shields.io/github/release/sbabcock23/hass-tryfi/all.svg?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/releases)
+![release_date](https://img.shields.io/github/release-date/sbabcock23/hass-tryfi.svg?style=for-the-badge)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![](https://img.shields.io/github/license/sbabcock23/hass-tryfi?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/github/workflow/status/sbabcock23/hass-tryfi/Python%20package?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/actions)
+[![](https://img.shields.io/github/workflow/status/sbabcock23/hass-tryfi/Validate%20with%20hassfest?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/actions)
 
 This allows you to integrate [TryFi](https://tryfi.com) Smart GPS Collars with Home Assistant. 
 
@@ -40,15 +42,36 @@ Current functionality includes:
 3. Enter in your TryFi username and password. Optionally you can select a polling frequency option (in seconds). Suggestion is nothing less then 5.
 4. Click Submit
 
+![Setup](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/setup.jpg?raw=true)
+
 ## Validation
 Once you have added the integration, you will see 1 or more devices and entities associated with this integration. To validate its accuracy, you can review the steps and distance counters for your pet or its current whereabouts.
+
+![Integration](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/tryfiaftersetup.jpg?raw=true)
+
+### Dog Device and Entities
+#### Device
+
+![Dog Device](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/dogdevice.jpg?raw=true)
+
+#### Entities
+
+![Dog Entities](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/dogentities.jpg?raw=true)
+
+### Base Device and Entities
+
+![Base Device and Entities](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/dogbase.jpg?raw=true)
 
 # How to Use
 ## Light Collar
 The light on your Pet's collar is represented as a light switch in HA. It can either be turned on or off. 
 
+![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/doglight.jpg?raw=true)
+
 ## Lost Dog Mode
 TryFi is equiped with a "Lost Dog Mode" functionality. In HA this is represented by a "lock" device similar to a lock in your home. If the pet is "locked" then everything is safe and secure. If the pet is unlocked then it must be lost :(
+
+![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/feature/documentation/docs/doglostmode.jpg?raw=true)
 
 # Lovelace
 
@@ -110,3 +133,7 @@ Turns on the collar light after dark if the pet is not home.
 * Documentation updates
 ## 0.0.1
 * Initial Release with basic functionality including light on/off, device tracker, lock mode of dog and general stats
+
+# Links
+* [Python TryFi Interface](https://github.com/sbabcock23/pytryfi)
+* [TryFi]((https://tryfi.com/))
