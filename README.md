@@ -136,4 +136,4 @@ Turns on the collar light after dark if the pet is not home.
 
 # Links
 * [Python TryFi Interface](https://github.com/sbabcock23/pytryfi)
-* [TryFi]((https://tryfi.com/))
+* [TryFi](https://tryfi.com/)
