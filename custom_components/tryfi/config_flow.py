@@ -1,10 +1,18 @@
 import logging
-from pytryfi import PyTryFi
+
 import voluptuous as vol
 from homeassistant import config_entries, core, exceptions
-from .const import DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_POLLING_RATE, DEFAULT_POLLING_RATE  # pylint:disable=unused-import
-from . import CannotConnect, async_connect_or_timeout
 from homeassistant.core import callback
+from pytryfi import PyTryFi
+
+from . import CannotConnect, async_connect_or_timeout
+from .const import (  # pylint:disable=unused-import
+    CONF_PASSWORD,
+    CONF_POLLING_RATE,
+    CONF_USERNAME,
+    DEFAULT_POLLING_RATE,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +44,7 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
     except:
         raise InvalidPolling
     try:
-        tryfi = PyTryFi(username=data[CONF_USERNAME],password=data[CONF_PASSWORD])
+        tryfi = PyTryFi(username=data[CONF_USERNAME], password=data[CONF_PASSWORD])
     except:
         raise CannotConnect
 
@@ -88,6 +96,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
 
+
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options."""
 
@@ -114,7 +123,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             ),
         )
 
+
 class InvalidPolling(exceptions.HomeAssistantError):
     """Error to indicate we cannot use the polling rate"""
+
+
 class CannotConnect(exceptions.HomeAssistantError):
     """Error to indicate we cannot use the polling rate"""

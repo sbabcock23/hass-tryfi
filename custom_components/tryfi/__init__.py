@@ -1,30 +1,39 @@
 import asyncio
+import logging
+from datetime import timedelta
 
-from homeassistant.core import callback
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers import config_validation as cv, discovery
-from homeassistant.helpers.dispatcher import dispatcher_send, async_dispatcher_connect
-from homeassistant.helpers.event import track_time_interval
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 from homeassistant import exceptions
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import discovery
+from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.event import track_time_interval
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
-
-from .const import DOMAIN, PLATFORMS, CONF_USERNAME, CONF_PASSWORD, CONF_POLLING_RATE, DEFAULT_POLLING_RATE
-import logging
-from datetime import timedelta
 from pytryfi import PyTryFi
 
+from .const import (
+    CONF_PASSWORD,
+    CONF_POLLING_RATE,
+    CONF_USERNAME,
+    DEFAULT_POLLING_RATE,
+    DOMAIN,
+    PLATFORMS,
+)
+
 LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup(hass: HomeAssistant, config: dict):
     hass.data.setdefault(DOMAIN, {})
     return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     tryfi = PyTryFi(username=entry.data["username"], password=entry.data["password"])
@@ -32,7 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
     await coordinator.async_refresh()
-    
+
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
@@ -67,6 +76,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     return unload_ok
 
+
 async def async_connect_or_timeout(hass, tryfi):
     userId = None
     try:
@@ -77,8 +87,10 @@ async def async_connect_or_timeout(hass, tryfi):
         LOGGER.error("Error connecting to TryFi")
         raise CannotConnect from err
 
+
 class CannotConnect(exceptions.HomeAssistantError):
     """Error to indicate we cannot connect."""
+
 
 class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage the refresh of the tryfi data api"""
@@ -93,9 +105,11 @@ class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=pollingRate),
         )
+
     @property
     def tryfi(self):
         return self._tryfi
+
     @property
     def pollingRate(self):
         return self._pollingRate

@@ -10,12 +10,13 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
+
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     tryfi = coordinator.data
-    
+
     new_devices = []
     for pet in tryfi.pets:
         new_devices.append(TryFiLock(hass, pet, coordinator))
@@ -32,28 +33,35 @@ class TryFiLock(CoordinatorEntity, LockEntity):
     @property
     def name(self):
         return f"{self.pet.name} - Lost State"
+
     @property
     def petId(self):
         return self._petId
+
     @property
     def pet(self):
         return self.coordinator.data.getPet(self.petId)
+
     @property
     def tryfi(self):
         return self.coordinator.data
+
     @property
     def unique_id(self):
         return f"{self.pet.petId}-lost"
+
     @property
     def device_id(self):
         return self.unique_id
+
     @property
     def is_locked(self):
-        #if pet is lost (returns true) then retrun is locked as false
+        # if pet is lost (returns true) then retrun is locked as false
         if self.pet.isLost:
             return False
         else:
             return True
+
     @property
     def device_info(self):
         return {
@@ -63,9 +71,11 @@ class TryFiLock(CoordinatorEntity, LockEntity):
             "model": self.pet.breed,
             "sw_version": self.pet.device.buildId,
         }
+
     # dog is home then its "locked"
     def lock(self, **kwargs):
         self.pet.setLostDogMode(self.tryfi.session, False)
+
     # dog is lost then its "unlocked"
     def unlock(self, **kwargs):
         self.pet.setLostDogMode(self.tryfi.session, True)
