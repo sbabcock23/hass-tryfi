@@ -129,6 +129,8 @@ Turns on the collar light after dark if the pet is not home.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.3
+* Multiple bases fix
 ## 0.0.2
 * Documentation updates
 ## 0.0.1
