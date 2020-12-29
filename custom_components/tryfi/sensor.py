@@ -31,13 +31,16 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 
     new_devices = []
     for pet in tryfi.pets:
+        LOGGER.debug(f"Adding Pet Battery Sensor: {pet}")
         new_devices.append(TryFiBatterySensor(hass, pet, coordinator))
         for statType in SENSOR_STATS_BY_TYPE:
             for statTime in SENSOR_STATS_BY_TIME:
+                LOGGER.debug(f"Adding Pet Stat: {pet}")
                 new_devices.append(
                     PetStatsSensor(hass, pet, coordinator, statType, statTime)
                 )
     for base in tryfi.bases:
+        LOGGER.debug(f"Adding Base: {base}")
         new_devices.append(TryFiBaseSensor(hass, base, coordinator))
     if new_devices:
         async_add_devices(new_devices)
@@ -47,6 +50,7 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
     def __init__(self, hass, base, coordinator):
         self._hass = hass
         self._baseId = base.baseId
+        self._base = base
         super().__init__(coordinator)
 
     @property
@@ -66,7 +70,8 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
     @property
     def base(self):
         # FIX - need to update interface with getbase class
-        return self.coordinator.data.bases[0]
+        #return self.coordinator.data.bases[0]
+        return self._base
 
     @property
     def device_id(self):
