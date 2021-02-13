@@ -36,7 +36,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    tryfi = PyTryFi(username=entry.data["username"], password=entry.data["password"])
+    tryfi = await hass.async_add_executor_job(PyTryFi,entry.data["username"], entry.data["password"])
     hass.data[DOMAIN][entry.entry_id] = tryfi
 
     coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
