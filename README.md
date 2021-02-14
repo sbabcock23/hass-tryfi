@@ -129,6 +129,8 @@ Turns on the collar light after dark if the pet is not home.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.5
+* Fixed [Issue #15](https://github.com/sbabcock23/hass-tryfi/issues/15) - dependency update
 ## 0.0.4
 * Fixed [Issue #17](https://github.com/sbabcock23/hass-tryfi/issues/17) - converted to async
 ## 0.0.3
