@@ -5,7 +5,7 @@
     "documentation": "https://github.com/sbabcock23/hass-pytryfi",
     "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
     "requirements": [
-      "pytryfi>=0.0.9"
+      "pytryfi>=0.0.10"
     ],
     "dependencies": [],
     "codeowners": ["@sbabcock23"]
