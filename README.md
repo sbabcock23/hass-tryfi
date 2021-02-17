@@ -18,6 +18,9 @@ Current functionality includes:
 * Lost Dog Mode - allows you to "unlock" your dog if it is lost and "lock" it when it is found
 * Bases - reports the status of the base (online/offline)
 
+## Donate
+If you would like to donate you can use my TryFi referral code "[395FX4](https://shop.tryfi.com/r/395FX4/?utm_source=referrals)" on your next purchase.
+
 # Installation
 ## Pre-Requisities
 * Home Assistant >= 0.0.117
