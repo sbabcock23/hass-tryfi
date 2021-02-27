@@ -182,7 +182,7 @@ class PetStatsSensor(CoordinatorEntity, Entity):
         if self.statType.upper() == "DISTANCE":
             return LENGTH_KILOMETERS
         else:
-            return None
+            return "steps"
 
     @property
     def device_info(self):
