@@ -3,7 +3,7 @@
     "name": "TryFi",
     "version": "0.0.6",
     "config_flow": true,
-    "documentation": "https://github.com/sbabcock23/hass-pytryfi",
+    "documentation": "https://github.com/sbabcock23/hass-tryfi",
     "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
     "requirements": [
       "pytryfi>=0.0.10"
