@@ -44,7 +44,8 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
     except:
         raise InvalidPolling
     try:
-        tryfi = PyTryFi(username=data[CONF_USERNAME], password=data[CONF_PASSWORD])
+        #tryfi = PyTryFi(username=data[CONF_USERNAME], password=data[CONF_PASSWORD])
+        tryfi = await hass.async_add_executor_job(PyTryFi, data[CONF_USERNAME], data[CONF_PASSWORD])
     except:
         raise CannotConnect
 
