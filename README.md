@@ -15,7 +15,7 @@ Current functionality includes:
 * Distance Counter - it will report your pets daily, weekly and monthly distance
 * Battery Level - it will report your Pet's collar battery level
 * Collar Light - you can control the light on the collar by turning it on and off (color selection coming soon!)
-* Lost Dog Mode - allows you to "unlock" your dog if it is lost and "lock" it when it is found
+* Lost Dog Mode - allows you to select Lost mode if your dog if it is lost and select Safe if it is found
 * Bases - reports the status of the base (online/offline)
 
 ## Donate
@@ -72,9 +72,10 @@ The light on your Pet's collar is represented as a light switch in HA. It can ei
 ![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/doglight.jpg?raw=true)
 
 ## Lost Dog Mode
-TryFi is equiped with a "Lost Dog Mode" functionality. In HA this is represented by a "lock" device similar to a lock in your home. If the pet is "locked" then everything is safe and secure. If the pet is unlocked then it must be lost :(
+TryFi is equiped with a "Lost Dog Mode" functionality. In HA this is represented by a select entity.
+Select Lost if your pet is lost or Safe if your pet is OK.
 
-![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/doglostmode.jpg?raw=true)
+![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/doglostmode.png?raw=true)
 
 # Lovelace
 
@@ -82,7 +83,7 @@ TryFi is equiped with a "Lost Dog Mode" functionality. In HA this is represented
 ```
 type: entities
 entities:
-  - entity: lock.harley_lost_state
+  - entity: select.harley_lost_state
   - entity: sensor.harley_collar_battery_level
   - entity: sensor.home_base
   - entity: sensor.harley_daily_steps
@@ -125,13 +126,15 @@ Turns on the collar light after dark if the pet is not home.
 ```
 
 # Known Issues
-* It sometimes takes time for the status to accurately refresh in HA. For example the light on/off status and the lock/unlock status.
+* It sometimes takes time for the status to accurately refresh in HA. For example the light on/off status and the Lost Mode select status.
 
 # Future Enhacements
 * Allow for the selection of the LED light color
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## Unreleased
+* Lost Mode is now a select entity instead of a lock entity
 ## 0.0.9
 * Updated dependency version of pytryfi
 * Fixed [Issue #30](https://github.com/sbabcock23/hass-tryfi/issues/30) - Convert to Async
