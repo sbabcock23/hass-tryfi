@@ -133,7 +133,7 @@ Turns on the collar light after dark if the pet is not home.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
-## Unreleased
+## 0.0.10
 * Lost Mode is now a select entity instead of a lock entity
 ## 0.0.9
 * Updated dependency version of pytryfi
