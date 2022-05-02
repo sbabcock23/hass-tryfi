@@ -50,6 +50,7 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
     def __init__(self, hass, base, coordinator):
         self._hass = hass
         self._baseId = base.baseId
+        self._online = base.online
         self._base = base
         super().__init__(coordinator)
 
