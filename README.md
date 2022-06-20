@@ -92,6 +92,12 @@ entities:
   - entity: sensor.harley_daily_distance
   - entity: sensor.harley_weekly_distance
   - entity: sensor.harley_monthly_distance
+  - entity: sensor.harley_daily_sleep
+  - entity: sensor.harley_weekly_sleep
+  - entity: sensor.harley_monthly_sleep
+  - entity: sensor.harley_daily_nap
+  - entity: sensor.harley_weekly_nap
+  - entity: sensor.harley_monthly_nap
 ```
 ## Light
 ```
@@ -133,6 +139,8 @@ Turns on the collar light after dark if the pet is not home.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.13
+* Enhancement - Added Sleep and Nap "sensors"/attributes based on new version of pytryfi
 ## 0.0.12
 * Fix - Issue where base status (online/offline) was not set correctly.
 ## 0.0.11
