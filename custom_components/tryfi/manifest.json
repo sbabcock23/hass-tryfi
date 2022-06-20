@@ -9,6 +9,7 @@
       "pytryfi>=0.0.15"
     ],
     "dependencies": [],
+    "iot_class": "cloud_polling",
     "codeowners": ["@sbabcock23"]
   }
   

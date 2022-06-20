@@ -3,7 +3,6 @@
     "documentation": "https://github.com/sbabcock23/hass-pytryfi",
     "domains": ["device_tracker", "light", "sensor", "select"],
     "homeassistant": "0.117.0",
-    "iot_class": "Local Polling",
     "name": "TryFi Dog Monitor",
     "render_readme": true
   }
