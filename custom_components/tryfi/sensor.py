@@ -5,7 +5,7 @@ from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
     LENGTH_KILOMETERS,
     PERCENTAGE,
-    TIME_HOURS,
+    TIME_MINUTES,
     STATE_OK,
     STATE_PROBLEM,
 )
@@ -177,18 +177,18 @@ class PetStatsSensor(CoordinatorEntity, Entity):
                 return round(self.pet.monthlyTotalDistance / 1000, 2)
         elif self.statType.upper() == "NAP":
             if self.statTime.upper() == "DAILY":
-                return self.pet.dailyNap
+                return round(self.pet.dailyNap / 60, 2)
             elif self.statTime.upper() == "WEEKLY":
-                return self.pet.weeklyNap
+                return round(self.pet.weeklyNap / 60, 2)
             elif self.statTime.upper() == "MONTHLY":
-                return self.pet.monthlyNap
+                return round(self.pet.monthlyNap / 60, 2)
         elif self.statType.upper() == "SLEEP":
             if self.statTime.upper() == "DAILY":
-                return self.pet.dailySleep
+                return round(self.pet.dailySleep / 60, 2)
             elif self.statTime.upper() == "WEEKLY":
-                return self.pet.weeklySleep
+                return round(self.pet.weeklySleep / 60, 2)
             elif self.statTime.upper() == "MONTHLY":
-                return self.pet.monthlySleep
+                return round(self.pet.monthlySleep / 60, 2)
         else:
             return None
 
