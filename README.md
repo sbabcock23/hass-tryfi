@@ -139,6 +139,8 @@ Turns on the collar light after dark if the pet is not home.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.14
+* Fix - fixed sleep and nap units from hours to minutes with proper conversion
 ## 0.0.13
 * Enhancement - Added Sleep and Nap "sensors"/attributes based on new version of pytryfi
 ## 0.0.12
