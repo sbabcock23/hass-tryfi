@@ -5,7 +5,7 @@ from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
     LENGTH_KILOMETERS,
     PERCENTAGE,
-    TIME_HOURS,
+    TIME_MINUTES,
     STATE_OK,
     STATE_PROBLEM,
 )
@@ -198,9 +198,9 @@ class PetStatsSensor(CoordinatorEntity, Entity):
         if self.statType.upper() == "DISTANCE":
             return LENGTH_KILOMETERS
         elif self.statType.upper() == "SLEEP":
-            return TIME_HOURS
+            return TIME_MINUTES
         elif self.statType.upper() == "NAP":
-            return TIME_HOURS
+            return TIME_MINUTES
         else:
             return "steps"
 
