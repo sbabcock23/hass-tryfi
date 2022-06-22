@@ -5,7 +5,7 @@ from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
     LENGTH_KILOMETERS,
     PERCENTAGE,
-    TIME_MINUTES,
+    TIME_HOURS,
     STATE_OK,
     STATE_PROBLEM,
 )
