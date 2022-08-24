@@ -1,12 +1,12 @@
 {
     "domain": "tryfi",
     "name": "TryFi",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "config_flow": true,
     "documentation": "https://github.com/sbabcock23/hass-tryfi",
     "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
     "requirements": [
-      "pytryfi>=0.0.15"
+      "pytryfi>=0.0.16"
     ],
     "dependencies": [],
     "iot_class": "cloud_polling",
