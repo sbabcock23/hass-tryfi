@@ -40,6 +40,11 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
                 new_devices.append(
                     PetStatsSensor(hass, pet, coordinator, statType, statTime)
                 )
+        LOGGER.debug(f"Adding Pet Generic Sensor: {pet}")
+        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Activity Type"))
+        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Name"))
+        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Address"))
+
     for base in tryfi.bases:
         LOGGER.debug(f"Adding Base: {base}")
         new_devices.append(TryFiBaseSensor(hass, base, coordinator))
@@ -105,6 +110,85 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
             # "sw_version": self.pet.device.buildId,
         }
 
+class PetGenericSensor(CoordinatorEntity, Entity):
+    """Representation of a Sensor."""
+
+    def __init__(self, hass, pet, coordinator, statType):
+        self._hass = hass
+        self._petId = pet.petId
+        self._statType = statType
+        super().__init__(coordinator)
+    
+    @property
+    def statType(self):
+        return self._statType
+
+    @property
+    def statTime(self):
+        return self._statTime
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return f"{self.pet.name} {self.statType.title()}"
+
+    @property
+    def unique_id(self):
+        """Return the ID of this sensor."""
+        formattedType = self.statType.lower().replace(" ", "-")
+        return f"{self.pet.petId}-{formattedType}"
+
+    @property
+    def petId(self):
+        return self._petId
+
+    @property
+    def pet(self):
+        return self.coordinator.data.getPet(self.petId)
+
+    @property
+    def device(self):
+        return self.pet.device
+
+    @property
+    def device_id(self):
+        return self.unique_id
+
+    @property
+    def device_class(self):
+        """Return the device class of the sensor."""
+        return None
+
+    @property
+    def icon(self):
+        if self.statType == "Activity Type":
+            return "mdi:run"
+        elif self.statType == "Current Place Name":
+            return "mdi:earth"
+        elif self.statType == "Current Place Address":
+            return "mdi:map-marker"
+
+    @property
+    def state(self):
+        if self.statType == "Activity Type":
+            return self.pet.getActivityType()
+        elif self.statType == "Current Place Name":
+            return self.pet.getCurrPlaceName()
+        elif self.statType == "Current Place Address":
+            return self.pet.getCurrPlaceAddress()
+    @property
+    def unit_of_measurement(self):
+        return None
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.pet.petId)},
+            "name": self.pet.name,
+            "manufacturer": "TryFi",
+            "model": self.pet.breed,
+            "sw_version": self.pet.device.buildId,
+        }
 
 class PetStatsSensor(CoordinatorEntity, Entity):
     """Representation of a Sensor."""
