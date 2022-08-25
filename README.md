@@ -139,6 +139,8 @@ Turns on the collar light after dark if the pet is not home.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.16
+* Enhancement - requested to add the attributes Activity Type, Current Place Name and Current Place Address.
 ## 0.0.15
 * Version bump to support latest pytryfi version 0.0.16 that includes multiple households
 ## 0.0.14
