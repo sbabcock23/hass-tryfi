@@ -44,6 +44,8 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
         new_devices.append(PetGenericSensor(hass, pet, coordinator, "Activity Type"))
         new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Name"))
         new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Address"))
+        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Connected To"))
+        
 
     for base in tryfi.bases:
         LOGGER.debug(f"Adding Base: {base}")
@@ -167,7 +169,9 @@ class PetGenericSensor(CoordinatorEntity, Entity):
             return "mdi:earth"
         elif self.statType == "Current Place Address":
             return "mdi:map-marker"
-
+        elif self.statType == "Connected To":
+            return "mdi:human-greeting-proximity"
+            
     @property
     def state(self):
         if self.statType == "Activity Type":
@@ -176,6 +180,8 @@ class PetGenericSensor(CoordinatorEntity, Entity):
             return self.pet.getCurrPlaceName()
         elif self.statType == "Current Place Address":
             return self.pet.getCurrPlaceAddress()
+        elif self.statType == "Connected To":
+            return self.pet.device.connectionStateType
     @property
     def unit_of_measurement(self):
         return None
