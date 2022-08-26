@@ -78,9 +78,7 @@ class TryFiBaseSensor(CoordinatorEntity, Entity):
 
     @property
     def base(self):
-        # FIX - need to update interface with getbase class
-        #return self.coordinator.data.bases[0]
-        return self._base
+        return self.coordinator.data.getBase(self.baseId)
 
     @property
     def device_id(self):
@@ -171,7 +169,7 @@ class PetGenericSensor(CoordinatorEntity, Entity):
             return "mdi:map-marker"
         elif self.statType == "Connected To":
             return "mdi:human-greeting-proximity"
-            
+
     @property
     def state(self):
         if self.statType == "Activity Type":
