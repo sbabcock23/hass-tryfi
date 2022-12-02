@@ -5,7 +5,6 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_BATTERY_CHARGING,
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.helpers.icon import icon_for_battery_level
 
 from .const import DOMAIN
 
