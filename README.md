@@ -14,6 +14,7 @@ Current functionality includes:
 * Step Counter - it will report your pets daily, weekly, and monthly steps
 * Distance Counter - it will report your pets daily, weekly and monthly distance
 * Battery Level - it will report your Pet's collar battery level
+* Battery Charging - it will report if your Pet's collar is charging
 * Collar Light - you can control the light on the collar by turning it on and off (color selection coming soon!)
 * Lost Dog Mode - allows you to select Lost mode if your dog if it is lost and select Safe if it is found
 * Bases - reports the status of the base (online/offline)
@@ -85,6 +86,7 @@ type: entities
 entities:
   - entity: select.harley_lost_state
   - entity: sensor.harley_collar_battery_level
+  - entity: binary_sensor.harley_collar_battery_charging
   - entity: sensor.home_base
   - entity: sensor.harley_daily_steps
   - entity: sensor.harley_weekly_steps
@@ -130,7 +132,31 @@ Turns on the collar light after dark if the pet is not home.
     domain: light
   mode: single
 ```
-
+## Fully Charged Notification
+Sends notification when battery has charged to 100%.
+```
+- id: '1661129896868'
+  alias: Pet's Collar - Fully Charged
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.pet_collar_battery_level
+    to: '100'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: binary_sensor.pet_collar_battery_charging
+    state: 'on'
+  action:
+  - service: notify.everyone_phone
+    data:
+      message: Pet's collar is fully charged!
+  mode: single
+```
 # Known Issues
 * It sometimes takes time for the status to accurately refresh in HA. For example the light on/off status and the Lost Mode select status.
 
