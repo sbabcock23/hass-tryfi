@@ -165,6 +165,8 @@ Sends notification when battery has charged to 100%.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.18
+* Enhancement - Battery Charging - it will report if your Pet's collar is charging
 ## 0.0.17
 * Enhancement - added the attribute ConnectedTo which will determine if the pet is connected to a person, base, etc.
 * Fix - base data was not updating. This issue is resolved.
