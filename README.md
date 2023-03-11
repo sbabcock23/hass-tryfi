@@ -24,7 +24,7 @@ If you would like to donate you can use my TryFi referral code "[395FX4](https:/
 
 # Installation
 ## Pre-Requisities
-* Home Assistant >= 0.0.117
+* Home Assistant >= 2023.1.0
 * TryFi dog collar with active cellular subscription
 * [HACS](https://github.com/custom-components/hacs) is already installed
 
@@ -165,6 +165,8 @@ Sends notification when battery has charged to 100%.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.19
+* Fix - pets without collars were causing errors. 
 ## 0.0.18
 * Enhancement - Battery Charging - it will report if your Pet's collar is charging
 ## 0.0.17
