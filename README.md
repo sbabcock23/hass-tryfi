@@ -165,6 +165,8 @@ Sends notification when battery has charged to 100%.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+##
+* Fix - Due to recent changes by TryFi, additional changes were required in the pytryfi library. Bumping version to include those changes/fixes.
 ## 0.0.19
 * Fix - pets without collars were causing errors. 
 ## 0.0.18
