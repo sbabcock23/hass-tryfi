@@ -6,7 +6,7 @@
 [![](https://img.shields.io/github/license/sbabcock23/hass-tryfi?style=for-the-badge)](LICENSE)
 [![](https://img.shields.io/github/workflow/status/sbabcock23/hass-tryfi/Validate%20with%20hassfest?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/actions)
 
-This allows you to integrate [TryFi](https://tryfi.com) Smart GPS Collars with Home Assistant. 
+This allows you to integrate [TryFi](https://tryfi.com) Smart GPS Collars with Home Assistant.
 
 ## Features
 Current functionality includes:
@@ -15,7 +15,7 @@ Current functionality includes:
 * Distance Counter - it will report your pets daily, weekly and monthly distance
 * Battery Level - it will report your Pet's collar battery level
 * Battery Charging - it will report if your Pet's collar is charging
-* Collar Light - you can control the light on the collar by turning it on and off (color selection coming soon!)
+* Collar Light - you can control the light on the collar by turning it on and off and setting the color
 * Lost Dog Mode - allows you to select Lost mode if your dog if it is lost and select Safe if it is found
 * Bases - reports the status of the base (online/offline)
 
@@ -68,7 +68,8 @@ Once you have added the integration, you will see 1 or more devices and entities
 
 # How to Use
 ## Light Collar
-The light on your Pet's collar is represented as a light switch in HA. It can either be turned on or off. 
+The light on your Pet's collar is represented as a light switch in HA. It can either be turned on or off.
+The color can be set. The collar only supports Red, Green, Blue, LightBlue, Purple, Yellow, and White. The closest color to your selection will be used.
 
 ![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/doglight.jpg?raw=true)
 
@@ -170,7 +171,7 @@ Sends notification when battery has charged to 100%.
 ## 0.0.20
 * Fix - Due to recent changes by TryFi, additional changes were required in the pytryfi library. Bumping version to include those changes/fixes.
 ## 0.0.19
-* Fix - pets without collars were causing errors. 
+* Fix - pets without collars were causing errors.
 ## 0.0.18
 * Enhancement - Battery Charging - it will report if your Pet's collar is charging
 ## 0.0.17

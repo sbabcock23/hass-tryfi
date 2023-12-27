@@ -1,0 +1,8 @@
+homeassistant==2023.12.0
+pip>=21.0,<23.2
+
+# Workaround for this issue: https://github.com/home-assistant/core/issues/95192
+botocore @ git+https://github.com/boto/botocore
+urllib3==1.26.16
+
+
