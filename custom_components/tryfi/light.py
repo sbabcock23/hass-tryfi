@@ -10,17 +10,24 @@ from .const import DOMAIN
 
 LOGGER = logging.getLogger(__name__)
 
-# A map of RGB colors to their corresponding color code in the tryfi API
-# The RGB values are my best guess
-COLOR_MAP = {
-    2: [224, 79, 72], # Red
-    3: [89, 165, 51], # Green
-    4: [42,97,215], # Blue
-    5: [209,63,177], # Purple
-    6: [223,223,74], # Yellow
-    7: [98,210,210], # Light Blue
-    8: [255,255,255], # White
-}
+def hex_to_rgb(hex_color):
+    """
+    Convert a hex representation of a color to an RGB tuple.
+
+    Parameters:
+    - hex_color (str): Hexadecimal representation of the color (e.g., "#RRGGBB" or "RRGGBB").
+
+    Returns:
+    - tuple: RGB tuple (red, green, blue).
+    """
+    # Remove the "#" if present
+    hex_color = hex_color.lstrip('#')
+
+    # Convert the hex values to integers
+    rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+    return rgb
+
 
 
 def calculate_distance(color1, color2):
@@ -80,8 +87,7 @@ class TryFiPetLight(CoordinatorEntity, LightEntity):
         self._petId = pet.petId
         self._hass = hass
 
-        # PyTryFi does not have a getColor query so we just start at white
-        self.lastKnownColor = [255,255,255]
+        self._colorMap = {ledColor.ledColorCode: hex_to_rgb(ledColor.hexCode) for ledColor in pet.device.availableLedColors}
 
         super().__init__(coordinator)
 
@@ -122,8 +128,8 @@ class TryFiPetLight(CoordinatorEntity, LightEntity):
        return ColorMode.RGB
 
     @property
-    def rgb_light(self):
-        return self.lastKnownColor
+    def rgb_color(self):
+        return hex_to_rgb(self.pet.device.ledColorHex)
 
     @property
     def device_info(self):
@@ -143,10 +149,10 @@ class TryFiPetLight(CoordinatorEntity, LightEntity):
             # This is set when the color is changed
             # if the brightness(which is a no-op) is changed, for example, this is not set
             requested_color = kwargs["rgb_color"]
-            closest_color_code = find_closest_color_code(requested_color, COLOR_MAP)
+            closest_color_code = find_closest_color_code(requested_color, self._colorMap)
 
             self.pet.setLedColorCode(self.tryfi.session, closest_color_code)
-            self.lastKnownColor = COLOR_MAP[closest_color_code]
+            self.lastKnownColor = self._colorMap[closest_color_code]
 
     def turn_off(self, **kwargs):
         self.pet.turnOnOffLed(self.tryfi.session, False)
