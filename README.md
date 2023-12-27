@@ -166,6 +166,8 @@ Sends notification when battery has charged to 100%.
 * Enable possibility of if pet not home and not with owner then trigger lost dog mode
 
 # Version History
+## 0.0.22
+* Added support for changing the color of the colar's LED light. This is currently based on a pre-defined set of colors.
 ## 0.0.21
 * Version bump of pytry package
 ## 0.0.20
