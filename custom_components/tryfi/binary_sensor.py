@@ -1,8 +1,8 @@
 import logging
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorEntity,
-    DEVICE_CLASS_BATTERY_CHARGING,
+    BinarySensorDeviceClass,
+    BinarySensorEntity
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -60,7 +60,7 @@ class TryFiBatteryChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def device_class(self):
         """Return the device class of the binary sensor."""
-        return DEVICE_CLASS_BATTERY_CHARGING
+        return BinarySensorDeviceClass.BATTERY_CHARGING
 
     @property
     def isCharging(self):
