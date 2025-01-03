@@ -39,11 +39,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     tryfi = await hass.async_add_executor_job(PyTryFi,entry.data["username"], entry.data["password"])
     hass.data[DOMAIN][entry.entry_id] = tryfi
 
-    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
-    await coordinator.async_refresh()
-
-    if not coordinator.last_update_success:
+    # Exceptions are swallowed in the PyTryFi library, so we must assert a 
+    # sucessful login before continuing with setup. When not successful,
+    # hass will continue to retry setup
+    if not hasattr(tryfi, 'currentUser'):
         raise ConfigEntryNotReady
+
+    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
+    await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
