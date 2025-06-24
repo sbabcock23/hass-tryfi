@@ -1,0 +1,53 @@
+set_led_color:
+  name: Set LED Color
+  description: Set the color of the pet's collar LED
+  target:
+    entity:
+      domain: light
+  fields:
+    color:
+      name: Color
+      description: The color to set (red, green, blue, yellow, magenta, cyan, orange, white)
+      required: true
+      selector:
+        select:
+          options:
+            - red
+            - green
+            - blue
+            - yellow
+            - magenta
+            - cyan
+            - orange
+            - white
+
+turn_on_led:
+  name: Turn On LED
+  description: Turn on the pet's collar LED
+  target:
+    entity:
+      domain: light
+
+turn_off_led:
+  name: Turn Off LED
+  description: Turn off the pet's collar LED
+  target:
+    entity:
+      domain: light
+
+set_lost_mode:
+  name: Set Lost Mode
+  description: Enable or disable lost dog mode for a pet
+  target:
+    entity:
+      domain: select
+  fields:
+    mode:
+      name: Mode
+      description: Lost mode state
+      required: true
+      selector:
+        select:
+          options:
+            - "Safe"
+            - "Lost"
