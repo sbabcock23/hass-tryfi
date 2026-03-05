@@ -1,4 +1,4 @@
-homeassistant==2023.12.3
+homeassistant==2025.10.2
 pip>=21.0,<23.2
 
 # Workaround for this issue: https://github.com/home-assistant/core/issues/95192
