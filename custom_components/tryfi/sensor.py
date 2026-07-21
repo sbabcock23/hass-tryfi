@@ -32,24 +32,30 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 
     new_devices = []
     for pet in tryfi.pets:
-        LOGGER.debug(f"Adding Pet Battery Sensor: {pet}")
-        new_devices.append(TryFiBatterySensor(hass, pet, coordinator))
-        for statType in SENSOR_STATS_BY_TYPE:
-            for statTime in SENSOR_STATS_BY_TIME:
-                LOGGER.debug(f"Adding Pet Stat: {pet}")
-                new_devices.append(
-                    PetStatsSensor(hass, pet, coordinator, statType, statTime)
-                )
-        LOGGER.debug(f"Adding Pet Generic Sensor: {pet}")
-        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Activity Type"))
-        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Name"))
-        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Address"))
-        new_devices.append(PetGenericSensor(hass, pet, coordinator, "Connected To"))
-        
+        try:
+            LOGGER.debug(f"Adding Pet Battery Sensor: {pet}")
+            new_devices.append(TryFiBatterySensor(hass, pet, coordinator))
+            for statType in SENSOR_STATS_BY_TYPE:
+                for statTime in SENSOR_STATS_BY_TIME:
+                    LOGGER.debug(f"Adding Pet Stat: {pet}")
+                    new_devices.append(
+                        PetStatsSensor(hass, pet, coordinator, statType, statTime)
+                    )
+            LOGGER.debug(f"Adding Pet Generic Sensor: {pet}")
+            new_devices.append(PetGenericSensor(hass, pet, coordinator, "Activity Type"))
+            new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Name"))
+            new_devices.append(PetGenericSensor(hass, pet, coordinator, "Current Place Address"))
+            new_devices.append(PetGenericSensor(hass, pet, coordinator, "Connected To"))
+        except Exception as e:
+            LOGGER.error(f"Skipping sensors for pet {getattr(pet, 'name', pet)} due to error: {e}")
 
     for base in tryfi.bases:
-        LOGGER.debug(f"Adding Base: {base}")
-        new_devices.append(TryFiBaseSensor(hass, base, coordinator))
+        try:
+            LOGGER.debug(f"Adding Base: {base}")
+            new_devices.append(TryFiBaseSensor(hass, base, coordinator))
+        except Exception as e:
+            LOGGER.error(f"Skipping sensor for base {getattr(base, 'baseId', base)} due to error: {e}")
+
     if new_devices:
         async_add_devices(new_devices)
 
