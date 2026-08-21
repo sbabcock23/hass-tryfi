@@ -45,7 +45,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hasattr(tryfi, 'currentUser'):
         raise ConfigEntryNotReady
 
-    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
+    # The options flow writes the polling rate to entry.options, so prefer it.
+    # entry.data only holds the value captured during initial setup.
+    polling_rate = entry.options.get(
+        CONF_POLLING_RATE, entry.data.get(CONF_POLLING_RATE, DEFAULT_POLLING_RATE)
+    )
+    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(polling_rate))
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})
@@ -55,7 +60,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # It's done by calling the `async_setup_entry` function in each platform module.
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    entry.async_on_unload(entry.add_update_listener(update_listener))
+
     return True
+
+
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
+    """Reload the entry so a changed polling rate takes effect."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
