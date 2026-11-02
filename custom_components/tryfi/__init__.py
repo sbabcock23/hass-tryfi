@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hasattr(tryfi, 'currentUser'):
         raise ConfigEntryNotReady
 
-    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
+    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.options.get("polling", entry.data["polling"])))
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})
