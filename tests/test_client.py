@@ -261,7 +261,7 @@ async def test_a_failed_group_on_a_new_pet_is_simply_absent(cloud: FakeCloud) ->
     assert pet.steps["daily"] == 4321
 
 
-async def test_rest_missing_is_unknown_and_present_but_empty_is_zero(
+async def test_rest_missing_is_unknown_and_zero_totals_are_zero(
     cloud: FakeCloud,
 ) -> None:
     # A false 0 for a missing summary made total_increasing count a reset.
@@ -270,13 +270,13 @@ async def test_rest_missing_is_unknown_and_present_but_empty_is_zero(
     assert pet.sleep_s == {"daily": None, "weekly": None, "monthly": None}
     original = cloud.rest
 
-    def empty_amounts():  # type: ignore[no-untyped-def]
+    def zero_daily():  # type: ignore[no-untyped-def]
         body = original()
-        body["dailyStat"] = {"restSummaries": [{"data": {"sleepAmounts": []}}]}
+        body["dailyStat"]["restSummary"]["sleepSecondsTotal"] = 0
         return body
 
     cloud.has_rest_stats = True
-    cloud.rest = empty_amounts  # type: ignore[method-assign]
+    cloud.rest = zero_daily  # type: ignore[method-assign]
     client = await _signed_in(cloud)
     assert client.pets[0].sleep_s["daily"] == 0
     assert client.pets[0].nap_s["weekly"] == 20000

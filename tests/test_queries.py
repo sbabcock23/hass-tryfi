@@ -19,7 +19,8 @@ PINNED = {
     "households": "9b6a684555ac69e83e5929ad1137d2eac83d02936d7bd906ae48bc039eebcd7c",
     "location": "7d8e1119993f463a4537dc6df064d122684b6e6490dac45af74609c8e0b6edd2",
     "activity": "b7e5274602635a48ebfd58a9eed131cc08302d1810424230132fe85bfafa03f3",
-    "rest": "032b868357ea1ac029f59cee68340a43ba83371ea6298dbec9bd4f6ba5fe4648",
+    # restFeed, from sbabcock23/pytryfi#44: restSummaryFeed was removed (#117).
+    "rest": "f1f4f8edbed5cf462f578d1924a076d5d7e89ffd54320297602105dc03b3b17b",
     "set_led_color": "c80cdd45bc37997d46bbf3145af7d756d5dab849e77c17204777e4bf52e1e7b0",
     "device_operation": (
         "efbc04a00f3fc9b99540e3ecfc4909258904112ba3b7b2a23db18cde92441162"

@@ -228,14 +228,18 @@ class FakeCloud:
         }
 
     def rest(self) -> dict[str, Any]:
+        # restFeed's shape (sbabcock23/pytryfi#44); no summary is null.
         def period(sleep: int, nap: int) -> dict[str, Any]:
             if not self.has_rest_stats:
-                return {"restSummaries": []}
-            amounts = [
-                {"type": "SLEEP", "duration": sleep},
-                {"type": "NAP", "duration": nap},
-            ]
-            return {"restSummaries": [{"data": {"sleepAmounts": amounts}}]}
+                return {"__typename": "RestFeed", "restSummary": None}
+            return {
+                "__typename": "RestFeed",
+                "restSummary": {
+                    "__typename": "RestSummary",
+                    "sleepSecondsTotal": sleep,
+                    "napSecondsTotal": nap,
+                },
+            }
 
         return {
             "dailyStat": period(30000, 3000),
@@ -292,7 +296,7 @@ class FakeCloud:
         if "currentActivitySummary" in text:
             self.requests.append("stats")
             return FakeResponse(200, {"data": {"pet": self.stats()}})
-        if "restSummaryFeed" in text:
+        if "restFeed(" in text:
             self.requests.append("rest")
             return FakeResponse(200, {"data": {"pet": self.rest()}})
         assert "UserFullDetails" in text.split("fragment")[0], text[:80]

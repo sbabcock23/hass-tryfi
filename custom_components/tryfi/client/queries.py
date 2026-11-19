@@ -5,6 +5,10 @@ character, and composed the way its common/query.py composed them. These are
 the queries that work against TryFi today: a changed one cannot be tested
 without an account, and a broken one breaks every install at once.
 tests/test_queries.py pins a hash of every composed query for that reason.
+
+The rest query is the one exception: TryFi removed restSummaryFeed in November
+2026, so it is sbabcock23/pytryfi#44's restFeed query instead, again copied
+character for character (#117).
 """
 
 API_HOST_URL_BASE = "https://api.tryfi.com"
@@ -25,10 +29,12 @@ QUERY_PET_ACTIVITY = (
     + VAR_PET_ID
     + '") {       dailyStat: currentActivitySummary (period: DAILY) {      ...ActivitySummaryDetails    }    weeklyStat: currentActivitySummary (period: WEEKLY) {      ...ActivitySummaryDetails    }    monthlyStat: currentActivitySummary (period: MONTHLY) {      ...ActivitySummaryDetails    }  }}'
 )
+# From sbabcock23/pytryfi#44: TryFi removed restSummaryFeed in November 2026
+# and answers it with an empty list (#117).
 QUERY_PET_REST = (
     'query {  pet (id: "'
     + VAR_PET_ID
-    + '") {	dailyStat: restSummaryFeed(cursor: null, period: DAILY, limit: 1) {      __typename      restSummaries {        __typename        ...RestSummaryDetails      }    }	weeklyStat: restSummaryFeed(cursor: null, period: WEEKLY, limit: 1) {      __typename      restSummaries {        __typename        ...RestSummaryDetails      }    }	monthlyStat: restSummaryFeed(cursor: null, period: MONTHLY, limit: 1) {      __typename      restSummaries {        __typename        ...RestSummaryDetails      }    }  }}'
+    + '") {    dailyStat: restFeed(cursor: null, period: DAY) { ...RestFeedDetails }    weeklyStat: restFeed(cursor: null, period: WEEK) { ...RestFeedDetails }    monthlyStat: restFeed(cursor: null, period: MONTH) { ...RestFeedDetails }  }}'
 )
 QUERY_PET_DEVICE_DETAILS = (
     'query {  pet (id: "' + VAR_PET_ID + '") {    __typename    ...PetProfile  }}'
@@ -59,7 +65,7 @@ FRAGMENT_CIRCLE_DETAILS = (
 FRAGMENT_LOCATION_POINT = "fragment LocationPoint on Location {  __typename  date  errorRadius  position {    __typename    ...PositionCoordinates  }}"
 FRAGMENT_PLACE_DETAILS = "fragment PlaceDetails on Place {  __typename  id  name  address  position {    __typename    ...PositionCoordinates  }  radius}"
 FRAGMENT_ACTIVITY_SUMMARY_DETAILS = "fragment ActivitySummaryDetails on ActivitySummary {  __typename  start  end  totalSteps  stepGoal  dailySteps {    __typename    date    totalSteps    stepGoal  }  totalDistance}"
-FRAGMENT_REST_SUMMARY_DETAILS = "fragment RestSummaryDetails on RestSummary {  __typename  start  end  data {    __typename    ... on ConcreteRestSummaryData {      sleepAmounts {        __typename        type        duration      }    }  }}"
+FRAGMENT_REST_FEED_DETAILS = "fragment RestFeedDetails on RestFeed {  __typename  restSummary {    __typename    sleepSecondsTotal    napSecondsTotal  }}"
 MUTATION_DEVICE_OPS = "mutation UpdateDeviceOperationParams($input: UpdateDeviceOperationParamsInput!) {  updateDeviceOperationParams(input: $input) {    __typename    ...DeviceDetails  }}"
 MUTATION_SET_LED_COLOR = "mutation SetDeviceLed($moduleId: String!, $ledColorCode: Int!) {  setDeviceLed(moduleId: $moduleId, ledColorCode: $ledColorCode) {    __typename    ...DeviceDetails  }}"
 
@@ -104,7 +110,7 @@ def activity(pet_id: str) -> str:
 
 
 def rest(pet_id: str) -> str:
-    return QUERY_PET_REST.replace(VAR_PET_ID, pet_id) + FRAGMENT_REST_SUMMARY_DETAILS
+    return QUERY_PET_REST.replace(VAR_PET_ID, pet_id) + FRAGMENT_REST_FEED_DETAILS
 
 
 def set_led_color() -> str:
