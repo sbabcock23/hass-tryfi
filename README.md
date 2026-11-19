@@ -5,7 +5,6 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/sbabcock23/hass-tryfi/blob/master/LICENSE)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![vibe-coded](https://img.shields.io/badge/vibe-coded-ff69b4?logo=musicbrainz&logoColor=white)](https://en.wikipedia.org/wiki/Vibe_coding)
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20me%20AI%20tokens-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/willbeeching)
 
 Get your dog's (or cat's) TryFi collar into Home Assistant: where they are, whether they're out
 on a walk, steps, distance, sleep, the collar's battery, its light, and Lost Mode.
@@ -250,6 +249,5 @@ the collar light and Lost Mode when you ask it to. Nothing goes through us or an
 
 ## Support
 
-If this saved you a walk round the garden looking for the cat, consider
-[buying Will some AI tokens](https://buymeacoffee.com/willbeeching) ☕🤖. Entirely optional; bug
-reports and stars are appreciated just as much.
+If you're buying a Fi collar, you can use Steve's referral code
+[395FX4](https://shop.tryfi.com/r/395FX4/?utm_source=referrals) at checkout.
