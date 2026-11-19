@@ -10,8 +10,9 @@
 Get your dog's (or cat's) TryFi collar into Home Assistant: where they are, whether they're out
 on a walk, steps, distance, sleep, the collar's battery, its light, and Lost Mode.
 
-Written by [Steve Babcock](https://github.com/sbabcock23) and co-maintained with
-[Will Beeching](https://github.com/willbeeching). Version 0.1.0 rebuilds it and keeps the same
+Created by [Steve Babcock](https://github.com/sbabcock23), who wrote the integration and the
+pytryfi library it started from. [Will Beeching](https://github.com/willbeeching) helps maintain
+it. Version 0.1.0 rebuilds it and keeps the same
 domain, the same entity ids and the same unique ids, so updating keeps your entities, history and
 automations.
 
@@ -230,9 +231,10 @@ your TryFi password in the app.
 
 ## Credits
 
-Written by **Steve Babcock** ([sbabcock23](https://github.com/sbabcock23)), who also wrote the
-pytryfi library the TryFi client is derived from, and co-maintained by **Will Beeching**
-([willbeeching](https://github.com/willbeeching)). Thanks to
+**Steve Babcock** ([sbabcock23](https://github.com/sbabcock23)) created this integration and
+wrote pytryfi, the library its TryFi client is derived from. **Will Beeching**
+([willbeeching](https://github.com/willbeeching)) helps maintain it and did the 0.1.0 rebuild.
+Thanks to
 **[disruptivepatternmaterial](https://github.com/disruptivepatternmaterial)**, whose fork first
 removed the third-party reporting from pytryfi and was the starting point for 0.1.0. Licensed under
 the Apache License 2.0, as the originals are; see [LICENSE](LICENSE).
@@ -249,5 +251,5 @@ the collar light and Lost Mode when you ask it to. Nothing goes through us or an
 ## Support
 
 If this saved you a walk round the garden looking for the cat, consider
-[buying me some AI tokens](https://buymeacoffee.com/willbeeching) ☕🤖. Entirely optional; bug
+[buying Will some AI tokens](https://buymeacoffee.com/willbeeching) ☕🤖. Entirely optional; bug
 reports and stars are appreciated just as much.
