@@ -171,7 +171,8 @@ class TryFiClient:
         ):
             try:
                 take(pet, await self._graphql(query(pet.pet_id)))
-            except (TryFiError, KeyError, TypeError, ValueError) as err:
+            # OverflowError: JSON can carry Infinity, which int() refuses.
+            except (TryFiError, KeyError, TypeError, ValueError, OverflowError) as err:
                 LOGGER.debug("Pet %s: %s not refreshed (%r)", pet.pet_id, group, err)
                 if old is not None:
                     pet.carry_over(old, group)

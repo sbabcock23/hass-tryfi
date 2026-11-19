@@ -15,6 +15,13 @@ that work against TryFi on every install today, and a changed one cannot be
 checked without a real account. `tests/test_queries.py` pins a hash of each
 composed query, taken from pytryfi itself before it was removed.
 
+The one exception is the rest query. TryFi removed `restSummaryFeed` in
+November 2026 and began answering it with an empty list, so sleep and nap read
+unknown ([#117](https://github.com/sbabcock23/hass-tryfi/issues/117)). It is now
+`restFeed`, taken character for character from
+[sbabcock23/pytryfi#44](https://github.com/sbabcock23/pytryfi/pull/44), and
+reads `restSummary.sleepSecondsTotal` and `napSecondsTotal`.
+
 **The requests.** The sign-in is the same form post to `/auth/login`; queries
 are the same GET to `/graphql` with the query as a parameter; changes are the
 same JSON post with the same variables. Only api.tryfi.com is ever contacted.

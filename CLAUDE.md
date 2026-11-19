@@ -44,6 +44,8 @@ than swallowing anything. Nothing runs in the executor.
 Do not change the GraphQL in `client/queries.py` without an account to test it
 against: it is pytryfi's text, character for character, because that is what
 works against TryFi today, and a broken query breaks every install at once.
+The rest query is from sbabcock23/pytryfi#44 (`restFeed`), because TryFi
+removed `restSummaryFeed` in November 2026 (#117).
 `tests/test_queries.py` pins a hash of each composed query; a failure there is
 the cue to test against a real account, not to update the hash.
 

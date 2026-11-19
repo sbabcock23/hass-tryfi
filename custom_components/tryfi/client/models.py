@@ -61,6 +61,10 @@ def dig(value: Any, *keys: str) -> Any:
     return value
 
 
+def _seconds(value: Any) -> int | None:
+    return None if value is None else int(value)
+
+
 def parse_time(value: Any) -> datetime | None:
     if not value:
         return None
@@ -132,7 +136,8 @@ class Collar:
         ):
             try:
                 group(device)
-            except (KeyError, TypeError, ValueError) as err:
+            # OverflowError: JSON can carry Infinity, which int() refuses.
+            except (KeyError, TypeError, ValueError, OverflowError) as err:
                 LOGGER.debug(
                     "Collar %s: %s not reported (%r)",
                     self.device_id,
@@ -271,26 +276,14 @@ class Pet:
             self.distance_m[period] = float(stat["totalDistance"])
 
     def take_rest(self, summary: JSON) -> None:
-        # Seconds. A summary with no SLEEP or NAP entry is 0; no summary at all
-        # is None.
+        # Seconds, from restFeed: TryFi removed restSummaryFeed in November
+        # 2026 and answered it with an empty list, so sleep and nap read
+        # unknown (#117). A period with no summary, or a null total, is
+        # unknown rather than 0.
         for period in PERIODS:
-            sleep: int | None = None
-            nap: int | None = None
-            try:
-                amounts = summary[f"{period}Stat"]["restSummaries"][0]["data"][
-                    "sleepAmounts"
-                ]
-            except (KeyError, TypeError, IndexError):
-                pass
-            else:
-                sleep = nap = 0
-                for amount in amounts or []:
-                    if amount["type"] == "SLEEP":
-                        sleep = int(amount["duration"])
-                    elif amount["type"] == "NAP":
-                        nap = int(amount["duration"])
-            self.sleep_s[period] = sleep
-            self.nap_s[period] = nap
+            rest = dig(summary, f"{period}Stat", "restSummary")
+            self.sleep_s[period] = _seconds(dig(rest, "sleepSecondsTotal"))
+            self.nap_s[period] = _seconds(dig(rest, "napSecondsTotal"))
 
     def carry_over(self, previous: Pet, group: str) -> None:
         """Keep the previous refresh's readings for a group whose query failed."""
