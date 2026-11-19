@@ -1,8 +1,8 @@
 # TryFi for Home Assistant
 
-[![CI](https://github.com/willbeeching/hass-tryfi/actions/workflows/ci.yaml/badge.svg)](https://github.com/willbeeching/hass-tryfi/actions/workflows/ci.yaml)
-[![GitHub Release](https://img.shields.io/github/v/release/willbeeching/hass-tryfi?include_prereleases)](https://github.com/willbeeching/hass-tryfi/releases)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/willbeeching/hass-tryfi/blob/master/LICENSE)
+[![CI](https://github.com/sbabcock23/hass-tryfi/actions/workflows/ci.yaml/badge.svg)](https://github.com/sbabcock23/hass-tryfi/actions/workflows/ci.yaml)
+[![GitHub Release](https://img.shields.io/github/v/release/sbabcock23/hass-tryfi?include_prereleases)](https://github.com/sbabcock23/hass-tryfi/releases)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/sbabcock23/hass-tryfi/blob/master/LICENSE)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![vibe-coded](https://img.shields.io/badge/vibe-coded-ff69b4?logo=musicbrainz&logoColor=white)](https://en.wikipedia.org/wiki/Vibe_coding)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20me%20AI%20tokens-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/willbeeching)
@@ -10,27 +10,26 @@
 Get your dog's (or cat's) TryFi collar into Home Assistant: where they are, whether they're out
 on a walk, steps, distance, sleep, the collar's battery, its light, and Lost Mode.
 
-This is a maintained fork of [sbabcock23/hass-tryfi](https://github.com/sbabcock23/hass-tryfi),
-which has had no code change since January 2025 and has over thirty open issues. It keeps the
-same domain, the same entity ids and the same unique ids, so it drops in over the original and
-your entities, history and automations carry on.
+Written by [Steve Babcock](https://github.com/sbabcock23) and co-maintained with
+[Will Beeching](https://github.com/willbeeching). Version 0.1.0 rebuilds it and keeps the same
+domain, the same entity ids and the same unique ids, so updating keeps your entities, history and
+automations.
 
-## Why this fork exists
+## What changed in 0.1.0
 
-**The original sends data to a third party.** The only release of its library on PyPI, pytryfi
-0.0.21, starts an error-reporting client (Sentry) with a key owned by the library's author the moment it
-signs in. That client hooks Home Assistant's root logger, so every error from anything in your
+**Earlier versions sent data to a third party.** The only release of their library on PyPI,
+pytryfi 0.0.21, starts an error-reporting client (Sentry) the moment it signs in. That client hooks Home Assistant's root logger, so every error from anything in your
 Home Assistant goes off-box, not just TryFi's. And when a sign-in fails, the report it sends
-can include the frame holding your email and password, which its scrubber does not reach. Upstream
-removed the call in April 2025 but never released it (upstream
-[#115](https://github.com/sbabcock23/hass-tryfi/issues/115)).
+can include the frame holding your email and password, which its scrubber does not reach. The call was
+removed from pytryfi in April 2025, but that change was never released
+([#115](https://github.com/sbabcock23/hass-tryfi/issues/115)).
 
-This fork has its own TryFi client instead, rewritten from pytryfi as a typed async client with
+0.1.0 has its own TryFi client instead, rewritten from pytryfi as a typed async client with
 none of that in it. It sends nothing anywhere but `api.tryfi.com`, and a test fails if any file in
 the integration names the reporting library or any other host. It still sends TryFi exactly the
 queries pytryfi did, down to the character, because those are known to work.
 
-**It also fixes what was broken.** Every open upstream issue is listed in
+**It also fixes what was broken.** Every issue open before 0.1.0 is listed in
 [docs/UPSTREAM_ISSUES.md](docs/UPSTREAM_ISSUES.md) with its cause and what was done. The big
 ones:
 
@@ -86,17 +85,17 @@ Pets with only a microchip (a Fi Nano, say) have no collar to read and are left 
 
 ### HACS (recommended)
 
-1. In HACS, open **⋮** → **Custom repositories** and add `https://github.com/willbeeching/hass-tryfi`
+1. In HACS, open **⋮** → **Custom repositories** and add `https://github.com/sbabcock23/hass-tryfi`
    with category **Integration**.
-2. Install **TryFi (maintained fork)**.
+2. Install **TryFi Dog Monitor**.
 3. Restart Home Assistant.
 
 ### Manual
 
-Download `tryfi.zip` from the [latest release](https://github.com/willbeeching/hass-tryfi/releases),
+Download `tryfi.zip` from the [latest release](https://github.com/sbabcock23/hass-tryfi/releases),
 extract it into `config/custom_components/`, and restart.
 
-### Moving over from sbabcock23/hass-tryfi
+### Updating from 0.0.x
 
 Your entities, their history and your automations are kept. In this order:
 
@@ -105,8 +104,7 @@ Your entities, their history and your automations are kept. In this order:
    only a restart unloads it.
 2. **Change your TryFi password** in the TryFi app. If the old library ever sent a failed sign-in,
    the password went with it.
-3. In HACS, **remove sbabcock23/hass-tryfi** (removing its files is fine; this replaces them),
-   then add this repository as above, install it, and restart.
+3. In HACS, **update TryFi Dog Monitor** to 0.1.0, and restart.
 4. **Re-enable the TryFi entry.** Home Assistant will ask for your password again, because you
    changed it: enter the new one.
 5. Check your tracker updates, and look over anything that used the two sensors whose states
@@ -136,11 +134,11 @@ that sign in to a different account.
 | --- | --- | --- |
 | Polling interval | 60 seconds | How often TryFi is asked for new readings. At least 60. Saving reloads the integration; entity ids and history are kept. |
 
-Upstream defaulted to 10 seconds. Each poll is one request for the account and three per pet,
+Versions before 0.1.0 defaulted to 10 seconds. Each poll is one request for the account and three per pet,
 and a collar reports far less often than that, so a faster poll mostly fetches the same answer
-again. An entry carried over from upstream at 10 seconds is raised to 60.
+again. An entry carried over at 10 seconds is raised to 60.
 
-## Breaking changes from upstream
+## Breaking changes in 0.1.0
 
 - **Activity type** reads `resting` / `walking`, not `OngoingRest` / `OngoingWalk`.
 - **Connected to** reads `base` / `wifi` / `cellular` / `phone`, not `ConnectedToBase` and so on.
@@ -148,7 +146,7 @@ again. An entry carried over from upstream at 10 seconds is raised to 60.
 - The tracker's `battery_level` attribute is gone (Home Assistant stops supporting it in 2027.7).
   Use `sensor.<pet>_collar_battery_level`.
 
-The full old-to-new table is in [docs/ENTITIES.md](docs/ENTITIES.md#moving-from-upstream-states-that-changed).
+The full old-to-new table is in [docs/ENTITIES.md](docs/ENTITIES.md#moving-from-00x-states-that-changed).
 Entity ids, unique ids and long-term statistics are unchanged.
 
 ## How it works
@@ -226,16 +224,17 @@ your TryFi password in the app.
 | | |
 | --- | --- |
 | [Entities](docs/ENTITIES.md) | Every entity, what it means, and what changed from upstream |
-| [Upstream issues](docs/UPSTREAM_ISSUES.md) | Every open upstream issue, its cause, and what this fork did |
+| [Upstream issues](docs/UPSTREAM_ISSUES.md) | Every issue open before 0.1.0, its cause, and what was done |
 | [Recipes](docs/RECIPES.md) | Automations and dashboard examples |
 | [The TryFi client](custom_components/tryfi/client/ORIGIN.md) | Where the client came from, what it kept from pytryfi, and every change |
 
 ## Credits
 
-Built on the work of **Steve Babcock** ([sbabcock23](https://github.com/sbabcock23)), who wrote
-both the original integration and the pytryfi library this fork's client is derived from, and of
+Written by **Steve Babcock** ([sbabcock23](https://github.com/sbabcock23)), who also wrote the
+pytryfi library the TryFi client is derived from, and co-maintained by **Will Beeching**
+([willbeeching](https://github.com/willbeeching)). Thanks to
 **[disruptivepatternmaterial](https://github.com/disruptivepatternmaterial)**, whose fork first
-removed the third-party reporting from pytryfi and was the starting point here. Licensed under
+removed the third-party reporting from pytryfi and was the starting point for 0.1.0. Licensed under
 the Apache License 2.0, as the originals are; see [LICENSE](LICENSE).
 
 ## Disclaimer
@@ -245,7 +244,7 @@ to TryFi's undocumented API, which can change without notice. It was developed w
 comes with no warranty, and you use it with your own account at your own risk.
 
 It reads your own pets' data from your own account into your own Home Assistant, and changes only
-the collar light and Lost Mode when you ask it to. Nothing goes through me or anyone else.
+the collar light and Lost Mode when you ask it to. Nothing goes through us or anyone else.
 
 ## Support
 

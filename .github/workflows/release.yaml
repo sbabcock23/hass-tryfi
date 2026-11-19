@@ -13,7 +13,7 @@ on:
         description: "Optional notes shown above the changelog (upgrade steps, warnings)"
         required: false
       since:
-        description: "Optional commit or tag the changelog starts after, when there is no previous release tag (the first release of a fork)"
+        description: "Optional commit or tag the changelog starts after, when there is no previous release tag (e.g. history with no release tag)"
         required: false
 
 jobs:
@@ -49,7 +49,7 @@ jobs:
         run: |
           if [ -n "$SINCE" ]; then
             # Without a release tag before it, the changelog would run back
-            # through every upstream commit the fork inherited.
+            # through every commit before it.
             git rev-parse -q --verify "$SINCE^{commit}" >/dev/null || {
               echo "since: $SINCE is not a commit in this repository" >&2
               exit 1
@@ -128,7 +128,7 @@ jobs:
           printf "## What's Changed\n%s\n\n" "$CHANGELOG" >> release-body.md
           printf '## Installation\n\n' >> release-body.md
           printf '### HACS (recommended)\n' >> release-body.md
-          printf 'Add `https://github.com/willbeeching/hass-tryfi` as a custom repository (category **Integration**), install, and restart Home Assistant.\n\n' >> release-body.md
+          printf 'Add `https://github.com/sbabcock23/hass-tryfi` as a custom repository (category **Integration**), install, and restart Home Assistant.\n\n' >> release-body.md
           printf '### Manual\n' >> release-body.md
           printf 'Download `tryfi.zip`, extract into `config/custom_components/`, and restart Home Assistant.\n' >> release-body.md
 

@@ -14,7 +14,7 @@ INTEGRATION = Path(__file__).resolve().parents[1] / "custom_components" / "tryfi
 
 # Spelt in two halves so that searching the repository for the library's name
 # finds only the README's account of why it was removed, which is the check the
-# fork was asked to pass.
+# integration holds itself to.
 REPORTER = "sen" + "try"
 
 

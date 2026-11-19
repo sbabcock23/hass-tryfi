@@ -1,8 +1,8 @@
 # Upstream issues
 
 Every open issue on [sbabcock23/hass-tryfi](https://github.com/sbabcock23/hass-tryfi/issues)
-as of 10 November 2026, and what this fork does about it. Where an issue traced
-back to pytryfi rather than the integration, the fix is in this fork's own
+as of 10 November 2026, and what 0.1.0 does about it. Where an issue traced
+back to pytryfi rather than the integration, the fix is in the integration's own
 TryFi client, which replaces pytryfi; every change from it is listed in
 [`client/ORIGIN.md`](../custom_components/tryfi/client/ORIGIN.md).
 Most have a test named after the failure.
@@ -11,14 +11,14 @@ Most have a test named after the failure.
 
 | Issue | Report | Cause | Fix |
 | --- | --- | --- | --- |
-| [#115](https://github.com/sbabcock23/hass-tryfi/issues/115) | Does this integration exfiltrate data? | pytryfi 0.0.21 starts a third-party error reporter that captures every error in Home Assistant. | pytryfi replaced by the fork's own client, which has none of it; a test fails if any file names it. |
+| [#115](https://github.com/sbabcock23/hass-tryfi/issues/115) | Does this integration exfiltrate data? | pytryfi 0.0.21 starts a third-party error reporter that captures every error in Home Assistant. | pytryfi replaced by the integration's own client, which has none of it; a test fails if any file names it. |
 | [#113](https://github.com/sbabcock23/hass-tryfi/issues/113), [#111](https://github.com/sbabcock23/hass-tryfi/issues/111) | Options flow: 500 error | The handler assigned the now read-only `config_entry`. | Rewritten options flow. |
 | [#109](https://github.com/sbabcock23/hass-tryfi/issues/109) | Deprecated `TrackerEntity` alias | Imported from `.config_entry`. | Imported from the package. |
 | [#104](https://github.com/sbabcock23/hass-tryfi/issues/104), [#91](https://github.com/sbabcock23/hass-tryfi/issues/91), [#56](https://github.com/sbabcock23/hass-tryfi/issues/56) | Data stops updating until a reload | No timeout on any request, so a connection that died silently hung the poll for ever; failures were swallowed so data went stale without a sign; no way to sign in again. | 30-second timeouts; failures reach the coordinator, so entities go unavailable; one fresh sign-in per failed poll; a rejected password starts re-authentication. |
 | [#102](https://github.com/sbabcock23/hass-tryfi/issues/102), [#99](https://github.com/sbabcock23/hass-tryfi/issues/99), [#96](https://github.com/sbabcock23/hass-tryfi/issues/96), [#87](https://github.com/sbabcock23/hass-tryfi/issues/87), [#67](https://github.com/sbabcock23/hass-tryfi/issues/67), [#62](https://github.com/sbabcock23/hass-tryfi/issues/62), [#61](https://github.com/sbabcock23/hass-tryfi/issues/61) | Only the bases show up / a collar missing | pytryfi compared a pet's device with the string `"None"`, but TryFi sends `null`; one pet without a collar (a Nano chip, a cat, a shared pet) abandoned every pet. Any other odd pet did the same. | Collarless pets skipped; each pet loaded on its own; one that fails cannot hide the others. |
 | [#100](https://github.com/sbabcock23/hass-tryfi/issues/100), [#69](https://github.com/sbabcock23/hass-tryfi/issues/69) | `FiDevice` has no `_mode` / `_ledOn` | Collar fields were read in one block; the first missing one left the rest undefined. | Every field defaults; fields read in independent groups; entities show unknown. |
 | [#93](https://github.com/sbabcock23/hass-tryfi/issues/93) | Base missing attributes breaks setup | Same pattern in `FiBase`. | Defaults, and fields read with `.get`. |
-| [#107](https://github.com/sbabcock23/hass-tryfi/issues/107) | "Could not set place" log spam | Logged by a later pytryfi on every poll while walking. | Not present in this fork's client; `place: null` handled quietly. |
+| [#107](https://github.com/sbabcock23/hass-tryfi/issues/107) | "Could not set place" log spam | Logged by a later pytryfi on every poll while walking. | Not present in the new client; `place: null` handled quietly. |
 | [#106](https://github.com/sbabcock23/hass-tryfi/issues/106) | Cannot sign in on a fresh install | Every failure surfaced as `CannotConnect` with a traceback. | Wrong password and unreachable cloud are told apart (`invalid_auth`, `cannot_connect`). |
 | [#86](https://github.com/sbabcock23/hass-tryfi/issues/86), [#80](https://github.com/sbabcock23/hass-tryfi/issues/80) | `async_forward_entry_setup` | Fixed in upstream 0.0.26. | Kept (`async_forward_entry_setups`). |
 | [#79](https://github.com/sbabcock23/hass-tryfi/issues/79), [#52](https://github.com/sbabcock23/hass-tryfi/issues/52) | Polling rate ignored | Only `entry.data` was read. | Options first, then data; saving reloads; floor of 60 s. |

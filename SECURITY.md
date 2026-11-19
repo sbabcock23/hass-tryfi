@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report anything security-relevant privately, using GitHub's
-[report a vulnerability](https://github.com/willbeeching/hass-tryfi/security/advisories/new)
+[report a vulnerability](https://github.com/sbabcock23/hass-tryfi/security/advisories/new)
 form, rather than opening a public issue.
 
 This is a spare-time project rather than a product, so please do not expect a
@@ -18,9 +18,9 @@ reads where their pet is. Anything that could expose those is worth reporting:
   diagnostics download. Both are routinely pasted into public issues.
 - Anything sending data anywhere other than `api.tryfi.com`.
 
-That second point is why this fork exists. Upstream's pytryfi reported errors,
-and every error record in the Home Assistant process, to a third-party service
-owned by its author. This fork's own TryFi client has none of that, and
+That second point is why 0.1.0 replaced pytryfi, whose only release reported
+errors, and every error record in the Home Assistant process, to a third-party
+service. The integration's own TryFi client has none of that, and
 `tests/test_no_telemetry.py` fails if any file names the reporting library or
 any host other than TryFi's.
 

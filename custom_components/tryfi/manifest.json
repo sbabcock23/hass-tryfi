@@ -7,14 +7,15 @@
     }
   ],
   "codeowners": [
+    "@sbabcock23",
     "@willbeeching"
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/willbeeching/hass-tryfi",
+  "documentation": "https://github.com/sbabcock23/hass-tryfi",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/willbeeching/hass-tryfi/issues",
+  "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
   "requirements": [],
   "version": "0.1.0"
 }

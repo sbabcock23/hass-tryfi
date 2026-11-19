@@ -1,16 +1,16 @@
 # Working on this repository
 
-A maintained fork of sbabcock23/hass-tryfi: a Home Assistant custom integration
-for TryFi dog collars. One domain, `tryfi`, in `custom_components/tryfi/`, with
+sbabcock23/hass-tryfi, co-maintained by willbeeching: a Home Assistant custom
+integration for TryFi dog collars. One domain, `tryfi`, in `custom_components/tryfi/`, with
 its own typed async TryFi client in `custom_components/tryfi/client/`. It is
 self-assessed at Home Assistant's Platinum quality scale, rule by rule in
 `quality_scale.yaml`; keep that file true when a change touches a rule.
 
 ## Non-negotiables
 
-**Send nothing anywhere but `api.tryfi.com`.** This fork exists because
-upstream's library reported every error in Home Assistant to its author's
-error-reporting service. `tests/test_no_telemetry.py` fails if any file in the
+**Send nothing anywhere but `api.tryfi.com`.** 0.1.0 replaced pytryfi
+because its only release reported every error in Home Assistant to a
+third-party error-reporting service. `tests/test_no_telemetry.py` fails if any file in the
 integration names that library or any other host. Do not add an endpoint.
 
 **Never commit secrets.** No emails, passwords, pet names, place names,

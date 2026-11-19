@@ -83,7 +83,7 @@ async def test_unique_ids_and_entity_ids_match_upstream(
     hass: HomeAssistant, entry: MockConfigEntry, loaded: FakeCloud
 ) -> None:
     by_unique = {e.unique_id: e.entity_id for e in _registry(hass, entry)}
-    # The upstream set, plus the one new sensor this fork adds.
+    # The upstream set, plus the one new sensor 0.1.0 adds.
     assert set(by_unique) == UPSTREAM_UNIQUE_IDS | {f"{PET_ID}-signal-strength"}
     assert {by_unique[u] for u in UPSTREAM_UNIQUE_IDS} == UPSTREAM_ENTITY_IDS
 

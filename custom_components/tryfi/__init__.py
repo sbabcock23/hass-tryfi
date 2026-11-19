@@ -77,7 +77,7 @@ def _async_adopt_unique_id(
 
     So the config flow can refuse a second entry for the same account. Left
     alone if another entry already holds it, which only a duplicate made
-    before this fork could.
+    before 0.1.0 could.
     """
     if user_id is None or entry.unique_id == user_id:
         return

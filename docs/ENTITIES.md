@@ -35,7 +35,7 @@ Entity ids are built from the pet's name, so for a pet called Rex:
 The weekly and monthly totals for steps, distance, sleep and nap
 (`sensor.rex_weekly_steps`, `sensor.rex_monthly_distance`, and so on).
 Enable any of them from the device page. Entities that already existed before
-this fork keep whatever state they had, enabled included.
+0.1.0 keep whatever state they had, enabled included.
 
 ## Bases
 
@@ -64,7 +64,7 @@ this fork keep whatever state they had, enabled included.
 - **Location is where the collar last reported**, which it does on its own
   schedule.
 
-## Moving from upstream: states that changed
+## Moving from 0.0.x: states that changed
 
 Two sensors used to show TryFi's raw API names. If an automation compares
 against one of them, update it:
