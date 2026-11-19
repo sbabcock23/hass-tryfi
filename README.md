@@ -250,4 +250,5 @@ the collar light and Lost Mode when you ask it to. Nothing goes through us or an
 ## Support
 
 If you're buying a Fi collar, you can use Steve's referral code
-[395FX4](https://shop.tryfi.com/r/395FX4/?utm_source=referrals) at checkout.
+[395FX4](https://shop.tryfi.com/r/395FX4/?utm_source=referrals) at checkout, or
+[buy Will some AI tokens](https://buymeacoffee.com/willbeeching).
