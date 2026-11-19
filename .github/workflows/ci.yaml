@@ -1,0 +1,246 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+  # Two of these lanes float on purpose — hassfest tracks core's master, and
+  # the types lane installs Home Assistant unpinned — so they can start failing
+  # on a day nobody pushed anything. Run nightly as well, or the first person
+  # to find out that a new core broke this integration is whoever installed it.
+  schedule:
+    - cron: "0 3 * * *"
+
+# Nothing here writes to the repository. Actions pinned to commit SHAs rather
+# than tags or branches: a tag can be moved and a branch changes under you, so
+# @main is an open invitation to run whatever that repository holds tomorrow.
+permissions:
+  contents: read
+
+env:
+  # The oldest core the integration claims to support. Anything using an API
+  # newer than this has to raise the claim rather than quietly rely on it.
+  MIN_HA_VERSION: "2025.1.0"
+  # Two, because core moves its floor. Home Assistant has required Python
+  # 3.14.2 since 2026.7, so a "latest" lane pinned to 3.13 does not fail —
+  # pip quietly resolves back to the newest core that still runs there.
+  # PYTHON_VERSION is the current one, used by the lanes that install an
+  # unpinned core. The pinned lanes carry their own in the matrix, because
+  # the env context is not available where a matrix is evaluated.
+  PYTHON_VERSION: "3.14"
+  # How far behind the newest core a "latest" lane may resolve before it is
+  # not testing what it claims to. Generous: the test harness pins a core and
+  # trails a release by days, and core ships monthly.
+  MAX_CORE_AGE_MONTHS: "3"
+
+jobs:
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -r requirements-lint.txt
+
+      - name: Black
+        run: black --check custom_components/ tests/
+
+      - name: isort
+        run: isort --check-only custom_components/ tests/
+
+      - name: Ruff
+        run: ruff check custom_components/ tests/
+
+      # No --exit-zero. A warning nobody has to act on is not a check, and
+      # this ran for months reporting findings that never blocked anything.
+      - name: flake8
+        run: flake8 custom_components/ tests/
+
+  test:
+    name: Tests on Home Assistant ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    strategy:
+      # Both lanes always report. Knowing a failure is specific to the old
+      # core is most of the diagnosis, and cancelling the other lane throws
+      # that away.
+      fail-fast: false
+      matrix:
+        include:
+          # The oldest core the integration claims to support. Importing
+          # against it proved only that nothing had moved module; this runs
+          # the behaviour, which is where a changed helper signature shows up.
+          - label: "2025.1 (minimum)"
+            requirements: requirements-test-min.txt
+            python: "3.13"
+          - label: latest
+            requirements: requirements-test.txt
+            python: "3.14"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      # The custom-integration test harness rather than a bare core. It
+      # brings a matching Home Assistant along with pytest and the warning
+      # filters the core's own suite runs under — without those, core's
+      # import-time deprecations meet this repo's filterwarnings=error and
+      # the run dies during collection. Tests that need a core skip
+      # themselves when it is missing, so a lane without one passes while
+      # silently running none of them.
+      - run: pip install -r ${{ matrix.requirements }}
+      - name: Check the pinned harness still matches the declared minimum
+        if: matrix.requirements == 'requirements-test-min.txt'
+        run: |
+          python - <<'CHECK'
+          from homeassistant.const import __version__ as core
+          import os, sys
+          want = os.environ["MIN_HA_VERSION"]
+          if core != want:
+              sys.exit(
+                  f"manifest and CI claim {want} is the minimum, but the pinned "
+                  f"test harness installs {core}. Bump the pin in "
+                  "requirements-test-min.txt, or MIN_HA_VERSION."
+              )
+          print(f"minimum lane is running core {core}")
+          CHECK
+      # And the other end of the same claim. A lane named "latest" that
+      # resolves a year-old core reports green for a core nobody runs, which
+      # is worse than not having the lane: it is the failure this check
+      # exists because of.
+      - name: Check the latest lane is actually running a current core
+        if: matrix.requirements == 'requirements-test.txt'
+        run: |
+          python - <<'CHECK'
+          from datetime import date
+          from homeassistant.const import __version__ as core
+          import os, sys
+          year, month = (int(part) for part in core.split(".")[:2])
+          today = date.today()
+          behind = (today.year - year) * 12 + today.month - month
+          allowed = int(os.environ["MAX_CORE_AGE_MONTHS"])
+          if behind > allowed:
+              sys.exit(
+                  f"this lane claims to test the latest Home Assistant but "
+                  f"resolved {core}, {behind} months old. Core raises its "
+                  "Python floor between releases, so the usual cause is "
+                  "PYTHON_VERSION being older than the newest core accepts."
+              )
+          print(f"latest lane is running core {core}")
+          CHECK
+      # The figure Home Assistant's quality scale asks for, enforced as a
+      # floor so it can only go up. Measured by path, not by module name:
+      # some tests import these files under a second name, and a module
+      # spec then reports the file as untouched.
+      - run: >-
+          python -m pytest -q
+          --cov=custom_components/tryfi
+          --cov-report=term-missing --cov-report=json --cov-fail-under=95
+      # The aggregate above is the number that hides the problem: one module
+      # can rot to nothing while the average stays comfortable. The rule this
+      # repo claims to meet asks per module, so check per module.
+      - run: python scripts/coverage_gate.py
+
+  types:
+    name: Types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      # Against a real Home Assistant: without it every helper is Any and the
+      # check passes by knowing nothing.
+      # mypy pinned for the same reason as the linters — a new release is
+      # a new set of opinions, and it should arrive as a pull request.
+      # Home Assistant is deliberately not pinned here: catching a core
+      # that breaks this integration is the point of the lane.
+      - run: pip install -r requirements-types.txt homeassistant
+      # No --ignore-missing-imports: the settings live in pyproject.toml
+      # and a missing stub is a real finding when core is installed here.
+      - run: mypy custom_components/tryfi/
+
+  imports:
+    name: Imports on Home Assistant ${{ matrix.ha }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both ends of the claim. The minimum is the one that matters: an API
+        # newer than the core the manifest claims would otherwise only be
+        # found by a user on that core installing it.
+        include:
+          - ha: "2025.1.0"
+            python: "3.13"
+          - ha: latest
+            python: "3.14"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install Home Assistant
+        run: |
+          if [ "${{ matrix.ha }}" = "latest" ]; then
+            pip install homeassistant
+          else
+            # With that release's own constraints. Resolving freely gives a
+            # dependency set Home Assistant never shipped — the first run of
+            # this lane failed on an aiodns/pycares mismatch that has nothing
+            # to do with this integration.
+            base="https://raw.githubusercontent.com/home-assistant/core"
+            # pycares<5 on top: the constraints pin aiodns==3.5.0 but leave
+            # pycares free, and pycares 5 removed an attribute that aiodns
+            # references at import time. An upstream incompatibility, nothing
+            # to do with this integration, but it stops the lane before it can
+            # test anything.
+            pip install "homeassistant==${{ matrix.ha }}" "pycares<5" \
+              -c "$base/${{ matrix.ha }}/homeassistant/package_constraints.txt"
+          fi
+
+      - name: Import every module
+        run: |
+          python - <<'PY'
+          import importlib, pkgutil, sys
+          sys.path.insert(0, ".")
+          package = importlib.import_module("custom_components.tryfi")
+          for module in pkgutil.iter_modules(package.__path__):
+              importlib.import_module(
+                  f"custom_components.tryfi.{module.name}"
+              )
+          print("all modules import")
+          PY
+
+      - name: Check the declared minimum matches what is installed
+        if: matrix.ha != 'latest'
+        run: |
+          python - <<'PY'
+          import json
+          from homeassistant.const import __version__ as installed
+
+          declared = json.load(open("hacs.json"))["homeassistant"]
+          assert declared == installed, (
+              f"hacs.json claims {declared} but the minimum lane runs {installed}"
+          )
+          print(f"minimum claim and test lane agree on {declared}")
+          PY
+
+  hacs:
+    name: HACS validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main
+        with:
+          category: integration
+
+  hassfest:
+    name: Hassfest validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: home-assistant/actions/hassfest@86d4564712fa02543c808e3a693dd04f9d3f8361 # master

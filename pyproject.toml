@@ -1,0 +1,75 @@
+[tool.isort]
+profile = "black"
+
+[tool.black]
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RET", "PTH"]
+ignore = [
+    # UP040 wants PEP 695 `type X = ...` for the config-entry alias. The
+    # explicit TypeAlias spelling is equivalent, and keeps every file parseable
+    # by tooling running on an older interpreter than the one Home Assistant
+    # requires.
+    "UP040",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# TryFi's GraphQL is kept character for character; see client/queries.py.
+"custom_components/tryfi/client/queries.py" = ["E501"]
+
+[tool.mypy]
+# The version mypy parses under, which is core's floor rather than this
+# integration's: the types lane installs Home Assistant unpinned, and its own
+# source will not parse under an older target.
+#
+# This does not licence newer syntax here. The integration still claims core
+# 2025.1, and the imports lane imports every module under exactly that pairing.
+python_version = "3.14"
+# Home Assistant's Platinum standard. Every setting below is what `strict`
+# turns on, spelled out rather than inherited from the flag so that turning
+# one off later has to be a deliberate, visible decision with a reason.
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_untyped_calls = true
+disallow_subclassing_any = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = true
+strict_equality = true
+extra_checks = true
+exclude = "^tests/"
+
+# Home Assistant publishes device_tracker's public API by re-exporting it from
+# the package __init__ with `# noqa: F401` and no `__all__`, which is exactly
+# what no_implicit_reexport refuses to read through. Importing past it, from
+# .config_entry, is what core deprecated (removal in 2027.6), so the only
+# import that satisfies both is the one mypy will not take on trust.
+[[tool.mypy.overrides]]
+module = "homeassistant.components.device_tracker"
+no_implicit_reexport = false
+
+# The same shape from 2026.10: BinarySensorDeviceClass moved into
+# binary_sensor/const.py and is re-exported from the package with a noqa and no
+# __all__. That module does not exist on 2025.1, so the package import stays.
+[[tool.mypy.overrides]]
+module = "homeassistant.components.binary_sensor"
+no_implicit_reexport = false
+
+# And light, on 2026.10: ColorMode and ATTR_RGB_COLOR are re-exported from the
+# package with no __all__ (2026.11 declares them). Importing them from
+# light/const.py instead is not an option while 2025.1 is supported — neither
+# is defined there yet — so only this package is read through.
+[[tool.mypy.overrides]]
+module = "homeassistant.components.light"
+no_implicit_reexport = false

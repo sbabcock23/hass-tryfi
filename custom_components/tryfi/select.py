@@ -1,71 +1,49 @@
+"""Lost Mode on the collar."""
+
+from __future__ import annotations
+
 from homeassistant.components.select import SelectEntity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .client import Pet
+from .coordinator import TryFiConfigEntry, TryFiDataUpdateCoordinator
+from .entity import TryFiPetEntity, async_add_per_pet
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Add sensors for passed config_entry in HA."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+SAFE = "Safe"
+LOST = "Lost"
 
-    tryfi = coordinator.data
-
-    new_devices = []
-    for pet in tryfi.pets:
-        new_devices.append(TryFiLostMode(hass, pet, coordinator))
-    if new_devices:
-        async_add_devices(new_devices)
+# One command at a time to a collar.
+PARALLEL_UPDATES = 1
 
 
-class TryFiLostMode(CoordinatorEntity, SelectEntity):
-    def __init__(self, hass, pet, coordinator):
-        self._petId = pet.petId
-        self._hass = hass
-        super().__init__(coordinator)
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TryFiConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_per_pet(
+        entry, async_add_entities, lambda pet: [TryFiLostMode(coordinator, pet)]
+    )
 
-    @property
-    def name(self):
-        return f"{self.pet.name} Lost Mode"
 
-    @property
-    def petId(self):
-        return self._petId
+class TryFiLostMode(TryFiPetEntity, SelectEntity):
+    _attr_options = [SAFE, LOST]
 
-    @property
-    def pet(self):
-        return self.coordinator.data.getPet(self.petId)
+    def __init__(self, coordinator: TryFiDataUpdateCoordinator, pet: Pet) -> None:
+        super().__init__(coordinator, pet, "lost", "lost_mode")
 
     @property
-    def tryfi(self):
-        return self.coordinator.data
+    def current_option(self) -> str | None:
+        # Unknown, rather than "Safe", when the collar did not report a mode.
+        lost = self.collar.is_lost
+        if lost is None:
+            return None
+        return LOST if lost else SAFE
 
-    @property
-    def unique_id(self):
-        return f"{self.pet.petId}-lost"
-
-    @property
-    def device_id(self):
-        return self.unique_id
-
-    @property
-    def options(self):
-        return ['Safe', 'Lost']
-
-    @property
-    def current_option(self):
-        if self.pet.isLost:
-            return 'Lost'
-        else:
-            return 'Safe'
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self.pet.petId)},
-            "name": self.pet.name,
-            "manufacturer": "TryFi",
-            "model": self.pet.breed,
-            "sw_version": self.pet.device.buildId,
-        }
-    
-    def select_option(self, option):
-        self.pet.setLostDogMode(self.tryfi.session, option == 'Lost')
+    async def async_select_option(self, option: str) -> None:
+        pet = self.pet
+        await self._async_command(
+            lambda: self.client.async_set_lost_mode(pet, option == LOST)
+        )

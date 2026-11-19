@@ -1,0 +1,11 @@
+# The harness release pinning the oldest core this integration claims to
+# support, so the behavioural tests run against it rather than only being
+# imported against it. 0.13.201 is the release pinning 2025.1.0; the CI lane
+# asserts that, so this and MIN_HA_VERSION cannot drift apart silently.
+pytest-homeassistant-custom-component==0.13.201
+pytest-cov
+# Core 2025.1 pins aiodns but leaves pycares floating. pycares 4.9 (later
+# than 2025.1) added a shutdown thread that this harness reports as lingering
+# after any test using a real aiohttp session, so hold it to what a 2025.1
+# install would have had. Measured: 4.8 has no such thread, 4.9 does.
+pycares<4.9

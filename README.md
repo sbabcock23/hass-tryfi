@@ -1,222 +1,255 @@
 # TryFi for Home Assistant
-![beta_badge](https://img.shields.io/badge/maturity-Beta-yellow.png?style=for-the-badge)
-[![](https://img.shields.io/github/release/sbabcock23/hass-tryfi/all.svg?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/releases)
-![release_date](https://img.shields.io/github/release-date/sbabcock23/hass-tryfi.svg?style=for-the-badge)
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![](https://img.shields.io/github/license/sbabcock23/hass-tryfi?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/github/workflow/status/sbabcock23/hass-tryfi/Validate%20with%20hassfest?style=for-the-badge)](https://github.com/sbabcock23/hass-tryfi/actions)
 
-This allows you to integrate [TryFi](https://tryfi.com) Smart GPS Collars with Home Assistant.
+[![CI](https://github.com/sbabcock23/hass-tryfi/actions/workflows/ci.yaml/badge.svg)](https://github.com/sbabcock23/hass-tryfi/actions/workflows/ci.yaml)
+[![GitHub Release](https://img.shields.io/github/v/release/sbabcock23/hass-tryfi?include_prereleases)](https://github.com/sbabcock23/hass-tryfi/releases)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/sbabcock23/hass-tryfi/blob/master/LICENSE)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![vibe-coded](https://img.shields.io/badge/vibe-coded-ff69b4?logo=musicbrainz&logoColor=white)](https://en.wikipedia.org/wiki/Vibe_coding)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20me%20AI%20tokens-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/willbeeching)
 
-## Features
-Current functionality includes:
-* Device Tracker - your pet will show up in HA using the GPS coordinates from the collar
-* Step Counter - it will report your pets daily, weekly, and monthly steps
-* Distance Counter - it will report your pets daily, weekly and monthly distance
-* Battery Level - it will report your Pet's collar battery level
-* Battery Charging - it will report if your Pet's collar is charging
-* Collar Light - you can control the light on the collar by turning it on and off and setting the color
-* Lost Dog Mode - allows you to select Lost mode if your dog if it is lost and select Safe if it is found
-* Bases - reports the status of the base (online/offline)
+Get your dog's (or cat's) TryFi collar into Home Assistant: where they are, whether they're out
+on a walk, steps, distance, sleep, the collar's battery, its light, and Lost Mode.
 
-## Donate
-If you would like to donate you can use my TryFi referral code "[395FX4](https://shop.tryfi.com/r/395FX4/?utm_source=referrals)" on your next purchase.
+Created by [Steve Babcock](https://github.com/sbabcock23), who wrote the integration and the
+pytryfi library it started from. [Will Beeching](https://github.com/willbeeching) helps maintain
+it. Version 0.1.0 rebuilds it and keeps the same
+domain, the same entity ids and the same unique ids, so updating keeps your entities, history and
+automations.
 
-# Installation
-## Pre-Requisities
-* Home Assistant >= 2023.1.0
-* TryFi dog collar with active cellular subscription
-* [HACS](https://github.com/custom-components/hacs) is already installed
+## What changed in 0.1.0
 
-## Installation Methods
+**Earlier versions sent data to a third party.** The only release of their library on PyPI,
+pytryfi 0.0.21, starts an error-reporting client (Sentry) the moment it signs in. That client hooks Home Assistant's root logger, so every error from anything in your
+Home Assistant goes off-box, not just TryFi's. And when a sign-in fails, the report it sends
+can include the frame holding your email and password, which its scrubber does not reach. The call was
+removed from pytryfi in April 2025, but that change was never released
+([#115](https://github.com/sbabcock23/hass-tryfi/issues/115)).
 
-### HACS Install
-1. Search for `TryFi` under `Integrations` in the HACS Store tab.
-2. Add the [Integration](#configuration) to your HA and configure.
+0.1.0 has its own TryFi client instead, rewritten from pytryfi as a typed async client with
+none of that in it. It sends nothing anywhere but `api.tryfi.com`, and a test fails if any file in
+the integration names the reporting library or any other host. It still sends TryFi exactly the
+queries pytryfi did, down to the character, because those are known to work.
 
-### Manual Install
-1. In your `/config` directory, create a `custom_components` folder if one does not exist.
-2. Copy the [tryfi](https://github.com/sbabcock23/hass-tryfi/tree/master/custom_components) folder and all of it's contents to your `custom_components` directory.
+**It also fixes what was broken.** Every issue open before 0.1.0 is listed in
+[docs/UPSTREAM_ISSUES.md](docs/UPSTREAM_ISSUES.md) with its cause and what was done. The big
+ones:
+
+- **"Only the bases show up."** One pet without a collar on the account (a Nano chip, a cat, a
+  pet shared with you, a collar you retired) made the library abandon every pet. Each pet now
+  loads on its own.
+- **"Data stops updating until I reload."** No request had a timeout, so a connection that died
+  quietly (a router failing over, say) hung the poll for ever. Now requests time out, a failed
+  poll signs in again on a fresh connection, and the entities show unavailable while TryFi is
+  unreachable instead of silently going stale.
+- **The options dialog failed with a 500**, and the polling rate it saved was never read.
+- **A wrong password was accepted at setup**, then retried in the background for ever. Now the
+  form says so, and a password changed later asks you for the new one.
+- **Ready for the 2027 removals** in Home Assistant, with no deprecation warnings on 2026.11.
+- **Built to Home Assistant's Platinum quality standard**: an async client on a session Home
+  Assistant provides, strict typing throughout, and every Bronze, Silver and Gold rule met or
+  exempt with a reason. This is a self-assessment, recorded rule by rule in
+  [`quality_scale.yaml`](custom_components/tryfi/quality_scale.yaml); a custom integration is not
+  reviewed by Home Assistant.
+
+## What you get
+
+For each pet with a collar, a device named after the pet:
+
+- **Tracker**, with the pet's photo, resolving to your zones. Unknown, not an error, until the
+  collar has its first fix.
+- **Activity**: Resting or Walking, and the saved place they're at.
+- **Today's steps, distance, sleep and nap**, with long-term statistics. Weekly and monthly
+  totals are there too, disabled by default.
+- **Collar light**, colour included, and **Lost Mode**. Both update the moment you change them.
+- **Diagnostics**: battery level and charging, and how the collar last connected (base, Wi-Fi,
+  cellular or a phone), with which base, whose phone or the signal strength.
+
+Each charging base shows as online or offline. Every entity is described in
+[docs/ENTITIES.md](docs/ENTITIES.md).
+
+## Requirements
+
+- Home Assistant 2025.1 or newer.
+- A TryFi account with at least one collar, and its email and password.
+
+## Supported devices
+
+Any collar on your TryFi account, as TryFi reports it. Owners on the upstream tracker report the
+Fi Series 3 and Series 3+ collars and the Fi Mini, with Series 2 and Series 3 charging bases. Collars
+report different things: a Fi Mini or Series 3+ leaves some fields out, and older collars do not
+say whether they are charging; whatever a collar does not report shows as unknown rather than as
+an error.
+
+Pets with only a microchip (a Fi Nano, say) have no collar to read and are left out.
+
+## Installation
+
+### HACS (recommended)
+
+1. In HACS, open **⋮** → **Custom repositories** and add `https://github.com/sbabcock23/hass-tryfi`
+   with category **Integration**.
+2. Install **TryFi Dog Monitor**.
 3. Restart Home Assistant.
-4. Add the [Integration](#configuration) to your HA and configure.
 
-## Configuration
-1. After installing TryFi go to Configuration --> Integrations and add a new Integration
-2. Search for TryFi
-3. Enter in your TryFi username and password. Optionally you can select a polling frequency option (in seconds). Suggestion is nothing less then 5.
-4. Click Submit
+### Manual
 
-![Setup](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/setup.jpg?raw=true)
+Download `tryfi.zip` from the [latest release](https://github.com/sbabcock23/hass-tryfi/releases),
+extract it into `config/custom_components/`, and restart.
 
-## Validation
-Once you have added the integration, you will see 1 or more devices and entities associated with this integration. To validate its accuracy, you can review the steps and distance counters for your pet or its current whereabouts.
+### Updating from 0.0.x
 
-![Integration](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/tryfiaftersetup.jpg?raw=true)
+Your entities, their history and your automations are kept. In this order:
 
-### Dog Device and Entities
-#### Device
+1. **Disable the existing TryFi entry and restart Home Assistant.** Settings → Devices & Services
+   → TryFi → ⋮ → Disable. The old library's reporting client is loaded into the running process;
+   only a restart unloads it.
+2. **Change your TryFi password** in the TryFi app. If the old library ever sent a failed sign-in,
+   the password went with it.
+3. In HACS, **update TryFi Dog Monitor** to 0.1.0, and restart.
+4. **Re-enable the TryFi entry.** Home Assistant will ask for your password again, because you
+   changed it: enter the new one.
+5. Check your tracker updates, and look over anything that used the two sensors whose states
+   changed (below).
 
-![Dog Device](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/dogdevice.jpg?raw=true)
+## Setup
 
-#### Entities
+**Settings → Devices & Services → Add Integration → TryFi.** If Home Assistant has Bluetooth (a
+proxy will do) and a Fi collar is in range, TryFi may already be waiting under **Discovered**;
+either way it leads to the same form:
 
-![Dog Entities](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/dogentities.jpg?raw=true)
+| Field | What to enter |
+| --- | --- |
+| Email | The email you sign in to the TryFi app with. |
+| Password | Its password. A wrong one says so straight away. |
+| Polling interval | Seconds between refreshes; 60 is the default and the minimum. |
 
-### Base Device and Entities
+One entry per TryFi account; adding the same account again is refused. To change the email or
+password later without losing anything, use **⋮ → Reconfigure** on the entry. It refuses details
+that sign in to a different account.
 
-![Base Device and Entities](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/dogbase.jpg?raw=true)
+### Options
 
-# How to Use
-## Light Collar
-The light on your Pet's collar is represented as a light switch in HA. It can either be turned on or off.
-The color can be set. The collar only supports Red, Green, Blue, LightBlue, Purple, Yellow, and White. The closest color to your selection will be used.
+**Settings → Devices & Services → TryFi → Configure.**
 
-![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/doglight.jpg?raw=true)
+| Option | Default | What it does |
+| --- | --- | --- |
+| Polling interval | 60 seconds | How often TryFi is asked for new readings. At least 60. Saving reloads the integration; entity ids and history are kept. |
 
-## Lost Dog Mode
-TryFi is equiped with a "Lost Dog Mode" functionality. In HA this is represented by a select entity.
-Select Lost if your pet is lost or Safe if your pet is OK.
+Versions before 0.1.0 defaulted to 10 seconds. Each poll is one request for the account and three per pet,
+and a collar reports far less often than that, so a faster poll mostly fetches the same answer
+again. An entry carried over at 10 seconds is raised to 60.
 
-![Lovelace](https://github.com/sbabcock23/hass-tryfi/blob/master/docs/doglostmode.png?raw=true)
+## Breaking changes in 0.1.0
 
-# Lovelace
+- **Activity type** reads `resting` / `walking`, not `OngoingRest` / `OngoingWalk`.
+- **Connected to** reads `base` / `wifi` / `cellular` / `phone`, not `ConnectedToBase` and so on.
+  TryFi's `UnknownConnectivity` is now plain unknown.
+- The tracker's `battery_level` attribute is gone (Home Assistant stops supporting it in 2027.7).
+  Use `sensor.<pet>_collar_battery_level`.
 
-## Entities
-```
-type: entities
-entities:
-  - entity: select.harley_lost_state
-  - entity: sensor.harley_collar_battery_level
-  - entity: binary_sensor.harley_collar_battery_charging
-  - entity: sensor.home_base
-  - entity: sensor.harley_daily_steps
-  - entity: sensor.harley_weekly_steps
-  - entity: sensor.harley_monthly_steps
-  - entity: sensor.harley_daily_distance
-  - entity: sensor.harley_weekly_distance
-  - entity: sensor.harley_monthly_distance
-  - entity: sensor.harley_daily_sleep
-  - entity: sensor.harley_weekly_sleep
-  - entity: sensor.harley_monthly_sleep
-  - entity: sensor.harley_daily_nap
-  - entity: sensor.harley_weekly_nap
-  - entity: sensor.harley_monthly_nap
-```
-## Light
-```
-type: light
-entity: light.harley_collar_light
-```
+The full old-to-new table is in [docs/ENTITIES.md](docs/ENTITIES.md#moving-from-00x-states-that-changed).
+Entity ids, unique ids and long-term statistics are unchanged.
 
-# Automation Examples
-## Turn on the Collar Light After Dark
-Turns on the collar light after dark if the pet is not home.
-```
-- id: '1604060166498'
-  alias: Turn on Light After Dark If Not Home
-  description: ''
-  trigger:
-  - platform: sun
-    event: sunset
-  condition:
-  - condition: and
-    conditions:
-    - condition: device
-      device_id: a7237a6c1144fcd90828b21de2572603
-      domain: device_tracker
-      entity_id: device_tracker.pet_tracker
-      type: is_not_home
-  action:
-  - type: turn_on
-    device_id: a7237a6c1144fcd90828b21de2572603
-    entity_id: light.pet_collar_light
-    domain: light
-  mode: single
-```
-## Fully Charged Notification
-Sends notification when battery has charged to 100%.
-```
-- id: '1661129896868'
-  alias: Pet's Collar - Fully Charged
-  description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - sensor.pet_collar_battery_level
-    to: '100'
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
-  condition:
-  - condition: state
-    entity_id: binary_sensor.pet_collar_battery_charging
-    state: 'on'
-  action:
-  - service: notify.everyone_phone
-    data:
-      message: Pet's collar is fully charged!
-  mode: single
-```
-# Known Issues
-* It sometimes takes time for the status to accurately refresh in HA. For example the light on/off status and the Lost Mode select status.
+## How it works
 
-# Future Enhacements
-* Allow for the selection of the LED light color
-* Enable possibility of if pet not home and not with owner then trigger lost dog mode
+It signs in with your email and password, the way the TryFi app does, and asks TryFi's cloud for
+each pet's position, activity and totals on a timer. TryFi has no push or token sign-in for
+third parties, so the password has to be kept, in your Home Assistant config entry and nowhere
+else, to sign in again when TryFi's session lapses.
 
-# Version History
-## 0.0.24 
-* updated deprecated classes
-## 0.0.23
-* Added support for dynamic lighting choices. 
-## 0.0.22
-* Added support for changing the color of the colar's LED light. This is currently based on a pre-defined set of colors.
-## 0.0.21
-* Version bump of pytry package
-## 0.0.20
-* Fix - Due to recent changes by TryFi, additional changes were required in the pytryfi library. Bumping version to include those changes/fixes.
-## 0.0.19
-* Fix - pets without collars were causing errors.
-## 0.0.18
-* Enhancement - Battery Charging - it will report if your Pet's collar is charging
-## 0.0.17
-* Enhancement - added the attribute ConnectedTo which will determine if the pet is connected to a person, base, etc.
-* Fix - base data was not updating. This issue is resolved.
-## 0.0.16
-* Enhancement - requested to add the attributes Activity Type, Current Place Name and Current Place Address.
-## 0.0.15
-* Version bump to support latest pytryfi version 0.0.16 that includes multiple households
-## 0.0.14
-* Fix - fixed sleep and nap units from hours to minutes with proper conversion
-## 0.0.13
-* Enhancement - Added Sleep and Nap "sensors"/attributes based on new version of pytryfi
-## 0.0.12
-* Fix - Issue where base status (online/offline) was not set correctly.
-## 0.0.11
-* Version bump to support latest pytryfi version 0.0.14.1
-## 0.0.10
-* Lost Mode is now a select entity instead of a lock entity
-## 0.0.9
-* Updated dependency version of pytryfi
-* Fixed [Issue #30](https://github.com/sbabcock23/hass-tryfi/issues/30) - Convert to Async
-## 0.0.8
-* Updating dependency version of pytryfi
-## 0.0.7
-* Updating dependency version of pytryfi
-## 0.0.6
-* Steps unit was added to enable charting of dogs steps over time.
-## 0.0.5
-* Fixed [Issue #15](https://github.com/sbabcock23/hass-tryfi/issues/15) - dependency update
-## 0.0.4
-* Fixed [Issue #17](https://github.com/sbabcock23/hass-tryfi/issues/17) - converted to async
-## 0.0.3
-* Multiple bases fix
-## 0.0.2
-* Documentation updates
-## 0.0.1
-* Initial Release with basic functionality including light on/off, device tracker, lock mode of dog and general stats
+- **Every polling interval** (60 seconds by default) it reads the account's pets and bases, then
+  each pet's position, activity totals and rest. Every entity updates from that one read.
+- **Turning the light on or off, or changing Lost Mode,** shows at once: TryFi's answer carries
+  the collar's new state. A refresh follows straight after to catch anything else.
+- **Location is where the collar last reported**, which it does on its own schedule.
+- **If one of a pet's reads fails**, that pet keeps its last readings for that part until the next
+  poll; the other pets are unaffected.
+- **If TryFi stops answering**, the poll gives up after 30 seconds, signs in once more, and
+  otherwise marks the entities unavailable until TryFi is back. It does not retry in a loop.
+- **If TryFi rejects the password**, the TryFi entry asks you to sign in again, rather than
+  retrying the old password in the background.
+- **A pet or base added to the account** appears on the next poll. **One removed from it** has its
+  device removed on the next poll. A pet still on the account but without its collar is kept, and
+  can be deleted from its device page.
 
-# Links
-* [Python TryFi Interface](https://github.com/sbabcock23/pytryfi)
-* [TryFi]((https://tryfi.com/))
+## Known limitations
+
+- **Not live.** A collar reports when it chooses to, and TryFi is read once a polling interval,
+  so a position can be some minutes old. It suits "is the dog home" far better than following a
+  walk.
+- **TryFi's own figures.** Distance can read 0 on a day with thousands of steps, and daily sleep
+  can read 0 for hours while the weekly figure grows. Those are what TryFi returns.
+- **Undocumented API.** TryFi publishes no API for third parties. This uses the one the app does,
+  which TryFi could change at any time.
+- **The password is stored** in the Home Assistant config entry, because TryFi offers no other
+  way to sign in again when its session lapses.
+- **The light's brightness** cannot be set; the collar's LED is on or off, in one of the colours
+  it offers. A colour you choose is matched to the nearest of those.
+- **Bluetooth discovery** only says a collar is near; it cannot tell whose account it is on, so it
+  still asks you to sign in.
+
+## What people use it for
+
+- **"The dog's got out."** The tracker leaving home, or Activity type turning to Walking with
+  nobody out with them, as a notification.
+- **Charge reminders.** Collar battery level under a threshold while not charging.
+- **A daily summary.** Steps, distance and sleep at the end of the day, or a weekly trend.
+- **Finding the dog at night.** The collar light on when the dog goes out after dark, and Lost
+  Mode from a dashboard button when it matters.
+
+Examples for each are in [docs/RECIPES.md](docs/RECIPES.md).
+
+## Removing the integration
+
+**Settings → Devices & Services → TryFi → ⋮ → Delete.** The email and password go with the entry,
+along with every device and entity it made; nothing is stored anywhere else. If you installed
+through HACS, remove it there too and restart. To cut off access at TryFi's end as well, change
+your TryFi password in the app.
+
+## Troubleshooting
+
+| Symptom | What to do |
+| --- | --- |
+| A pet is missing | Pets with no collar are skipped on purpose. A pet added to the account recently appears on the next poll. For a collared pet that never appears, download diagnostics (below) and open an issue. |
+| Entities unavailable | TryFi isn't answering. They come back on their own; the log says why. |
+| A pet's entities unavailable, the rest fine | The pet is still on the account but its collar is not. Delete its device if it is not coming back. |
+| A device disappeared | TryFi stopped listing that pet or base on the account. It comes back, with the same entity ids, if TryFi lists it again. |
+| The light or Lost Mode says TryFi did not accept the change | TryFi refused it; the message says why. Nothing changed on the collar. |
+| Setup says the account is already configured | Each TryFi account can be added once. |
+| TryFi asks you to sign in again | Your TryFi password changed. Enter the current one in the prompt on the TryFi entry. |
+| Distance reads 0 while steps climb | That's the figure TryFi returns; see [ENTITIES.md](docs/ENTITIES.md#what-the-numbers-mean). |
+| Something else | **Settings → Devices & Services → TryFi → ⋮ → Download diagnostics**. Your email, password, pet and place names and coordinates are already removed, so it can go straight into an issue. |
+
+## Documentation
+
+| | |
+| --- | --- |
+| [Entities](docs/ENTITIES.md) | Every entity, what it means, and what changed from upstream |
+| [Upstream issues](docs/UPSTREAM_ISSUES.md) | Every issue open before 0.1.0, its cause, and what was done |
+| [Recipes](docs/RECIPES.md) | Automations and dashboard examples |
+| [The TryFi client](custom_components/tryfi/client/ORIGIN.md) | Where the client came from, what it kept from pytryfi, and every change |
+
+## Credits
+
+**Steve Babcock** ([sbabcock23](https://github.com/sbabcock23)) created this integration and
+wrote pytryfi, the library its TryFi client is derived from. **Will Beeching**
+([willbeeching](https://github.com/willbeeching)) helps maintain it and did the 0.1.0 rebuild.
+Thanks to
+**[disruptivepatternmaterial](https://github.com/disruptivepatternmaterial)**, whose fork first
+removed the third-party reporting from pytryfi and was the starting point for 0.1.0. Licensed under
+the Apache License 2.0, as the originals are; see [LICENSE](LICENSE).
+
+## Disclaimer
+
+An unofficial community project, with no affiliation to or endorsement from TryFi. "TryFi" and "Fi" are their trademarks, used here only to say what this connects to. It talks
+to TryFi's undocumented API, which can change without notice. It was developed with AI assistance,
+comes with no warranty, and you use it with your own account at your own risk.
+
+It reads your own pets' data from your own account into your own Home Assistant, and changes only
+the collar light and Lost Mode when you ask it to. Nothing goes through us or anyone else.
+
+## Support
+
+If this saved you a walk round the garden looking for the cat, consider
+[buying Will some AI tokens](https://buymeacoffee.com/willbeeching) ☕🤖. Entirely optional; bug
+reports and stars are appreciated just as much.

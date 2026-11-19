@@ -1,15 +1,21 @@
 {
-    "domain": "tryfi",
-    "name": "TryFi",
-    "version": "0.0.26",
-    "config_flow": true,
-    "documentation": "https://github.com/sbabcock23/hass-tryfi",
-    "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
-    "requirements": [
-      "pytryfi>=0.0.21"
-    ],
-    "dependencies": [],
-    "iot_class": "cloud_polling",
-    "codeowners": ["@sbabcock23"]
-  }
-  
+  "domain": "tryfi",
+  "name": "TryFi",
+  "bluetooth": [
+    {
+      "service_uuid": "57b40001-2528-d6bc-b043-b49af0ec06c1"
+    }
+  ],
+  "codeowners": [
+    "@sbabcock23",
+    "@willbeeching"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/sbabcock23/hass-tryfi",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

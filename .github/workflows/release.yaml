@@ -1,0 +1,229 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag to create (e.g. v0.1.0)"
+        required: true
+      notes:
+        description: "Optional notes shown above the changelog (upgrade steps, warnings)"
+        required: false
+      since:
+        description: "Optional commit or tag the changelog starts after, when there is no previous release tag (e.g. history with no release tag)"
+        required: false
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_NUMBER=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Get previous tag
+        id: prev_tag
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          if [ -n "$SINCE" ]; then
+            # Without a release tag before it, the changelog would run back
+            # through every commit before it.
+            git rev-parse -q --verify "$SINCE^{commit}" >/dev/null || {
+              echo "since: $SINCE is not a commit in this repository" >&2
+              exit 1
+            }
+            PREV_TAG="$SINCE"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Usually the new tag does not exist yet on a dispatch run, so the
+            # latest tag is the previous release. Not on a re-run, though —
+            # re-dispatching the same version to correct its notes is a normal
+            # thing to do, and comparing that tag against itself yields an empty
+            # changelog that quietly replaces the real one. Skip our own tag.
+            PREV_TAG=$(git describe --abbrev=0 --tags --exclude "$VERSION" \
+              2>/dev/null || echo "")
+          else
+            PREV_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          fi
+          echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        env:
+          PREV_TAG: ${{ steps.prev_tag.outputs.PREV_TAG }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          # End the range at the tag when it already exists. On a first
+          # dispatch it does not, and HEAD is what is about to be tagged; on a
+          # re-run to correct the notes it does, and HEAD has usually moved on
+          # since — listing commits that are not in the release.
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            TIP="$VERSION"
+          else
+            TIP="HEAD"
+          fi
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="$PREV_TAG..$TIP"
+          else
+            RANGE="$TIP"
+          fi
+          CHANGELOG=$(git log $RANGE --pretty=format:"- %s" --no-merges)
+          echo "CHANGELOG<<GHEOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "GHEOF" >> $GITHUB_OUTPUT
+          # Anything a commit body marked BREAKING is something a user has to
+          # act on. Buried in a commit nobody reads it; it belongs at the top of
+          # the release notes.
+          #
+          # The whole paragraph, not just the marker line. sed -n p printed one
+          # line, so a wrapped sentence reached the notes truncated mid-clause
+          # under a warning heading — which is worse than not surfacing it at
+          # all. A comma is accepted alongside the colon: the slip is easy to
+          # make and the intent is identical, and the one time it happened the
+          # real breaking change silently missed the section it was written for.
+          BREAKING=$(git log $RANGE --pretty=format:"%b%n" --no-merges | awk '
+            /^BREAKING[:,] */ { sub(/^BREAKING[:,] */, ""); grab = 1; print; next }
+            grab && NF        { print; next }
+            grab && !NF       { grab = 0; print "" }
+          ')
+          echo "BREAKING<<GHEOF" >> $GITHUB_OUTPUT
+          echo "$BREAKING" >> $GITHUB_OUTPUT
+          echo "GHEOF" >> $GITHUB_OUTPUT
+
+      - name: Compose release body
+        id: body
+        env:
+          NOTES: ${{ inputs.notes }}
+          BREAKING: ${{ steps.changelog.outputs.BREAKING }}
+          CHANGELOG: ${{ steps.changelog.outputs.CHANGELOG }}
+        run: |
+          : > release-body.md
+          if [ -n "$NOTES" ]; then
+            printf '%s\n\n' "$NOTES" >> release-body.md
+          fi
+          if [ -n "$BREAKING" ]; then
+            printf '## ⚠️ Breaking changes\n\n%s\n\n' "$BREAKING" >> release-body.md
+          fi
+          printf "## What's Changed\n%s\n\n" "$CHANGELOG" >> release-body.md
+          printf '## Installation\n\n' >> release-body.md
+          printf '### HACS (recommended)\n' >> release-body.md
+          printf 'Add `https://github.com/sbabcock23/hass-tryfi` as a custom repository (category **Integration**), install, and restart Home Assistant.\n\n' >> release-body.md
+          printf '### Manual\n' >> release-body.md
+          printf 'Download `tryfi.zip`, extract into `config/custom_components/`, and restart Home Assistant.\n' >> release-body.md
+
+      - name: Check the manifest version matches the tag
+        env:
+          VERSION_NUMBER: ${{ steps.get_version.outputs.VERSION_NUMBER }}
+        run: |
+          # HACS reads the manifest, not the tag, so a mismatch ships a release
+          # that reports itself as a different version than it is — which is
+          # exactly how a debugging session loses an afternoon.
+          MANIFEST=$(python -c "import json;print(json.load(open('custom_components/tryfi/manifest.json'))['version'])")
+          if [ "$MANIFEST" != "$VERSION_NUMBER" ]; then
+            echo "manifest says $MANIFEST but the release is $VERSION_NUMBER" >&2
+            exit 1
+          fi
+          echo "manifest and tag agree on $MANIFEST"
+
+      - name: Build from the tag, not the branch tip
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          # Re-running a release to correct its notes rebuilds the zip. Without
+          # this it is built from wherever the branch has moved on to, so the
+          # download would carry code the tag does not point at — silently, and
+          # under a version number that says otherwise. On a first release the
+          # tag does not exist yet and the branch tip is exactly right.
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "tag exists; building $VERSION rather than $(git rev-parse --short HEAD)"
+            git checkout --quiet --detach "$VERSION"
+          fi
+
+      # Two archives, because the two consumers want opposite shapes and one
+      # file cannot be both. The sibling JLR integration shipped one file for
+      # both once and broke every HACS install.
+      #
+      #   tryfi.zip       contains tryfi/... — for people
+      #                           installing by hand, who extract it into
+      #                           config/custom_components/.
+      #   tryfi-hacs.zip  contains the integration's files at its root
+      #                           — HACS runs extractall() against
+      #                           config/custom_components/tryfi,
+      #                           so anything wrapping them in a directory
+      #                           lands a level too deep.
+      - name: Create ZIP archives
+        run: |
+          (cd custom_components && zip -qr ../tryfi.zip tryfi/)
+          (cd custom_components/tryfi && zip -qr ../../tryfi-hacs.zip .)
+
+      # Extract them the way their consumers actually do and look at where the
+      # files land. Reading the archive's entry names cannot tell you what a
+      # path will become.
+      - name: Extract both archives and check where the files land
+        run: |
+          python3 - <<'CHECK'
+          import pathlib, shutil, sys, zipfile
+
+          def extract(archive, into):
+              root = pathlib.Path("/tmp/relcheck") / archive
+              shutil.rmtree(root, ignore_errors=True)
+              dest = root / into
+              dest.mkdir(parents=True)
+              with zipfile.ZipFile(archive) as z:
+                  z.extractall(dest)
+              return root
+
+          failed = []
+          # HACS: extractall() straight into the integration directory.
+          root = extract("tryfi-hacs.zip", "custom_components/tryfi")
+          if not (root / "custom_components/tryfi/manifest.json").is_file():
+              failed.append("HACS install would leave no manifest.json for Home Assistant to find")
+          if (root / "custom_components/tryfi/tryfi").exists():
+              failed.append("HACS install would nest the integration one level too deep")
+
+          # Manual: told to extract into config/custom_components/.
+          root = extract("tryfi.zip", "custom_components")
+          if not (root / "custom_components/tryfi/manifest.json").is_file():
+              failed.append("manual install would not produce custom_components/tryfi")
+
+          for line in failed:
+              print(f"::error::{line}", file=sys.stderr)
+          if failed:
+              sys.exit(1)
+          print("both archives extract to the right place")
+          CHECK
+
+      - name: Create release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: "TryFi ${{ steps.get_version.outputs.VERSION }}"
+          body_path: release-body.md
+          files: |
+            tryfi.zip
+            tryfi-hacs.zip
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'beta') || contains(steps.get_version.outputs.VERSION, 'alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

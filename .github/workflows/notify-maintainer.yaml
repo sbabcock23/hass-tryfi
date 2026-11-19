@@ -1,0 +1,56 @@
+name: Notify maintainer
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      # Assigns only. The maintainer watches the repository, so a comment
+      # announcing the issue would only add noise to the thread.
+      - name: Assign on new issues
+        if: github.event_name == 'issues'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const maintainer = "willbeeching";
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: [maintainer],
+            });
+
+      # Assigns only. It used to post an @-mention after every comment, which
+      # filled threads with a bot line between each reply; GitHub already
+      # notifies the maintainer of comments on issues they are assigned to.
+      - name: Assign on new comments
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const maintainer = "willbeeching";
+            const comment = context.payload.comment;
+
+            if (comment.user.type === "Bot") {
+              return;
+            }
+
+            if (comment.user.login === maintainer) {
+              return;
+            }
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: [maintainer],
+            });

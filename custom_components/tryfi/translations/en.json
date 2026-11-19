@@ -2,28 +2,179 @@
   "config": {
     "step": {
       "user": {
+        "description": "Sign in with the email and password you use in the TryFi app.",
         "data": {
-          "username": "username",
-          "password": "password"
+          "username": "Email",
+          "password": "Password",
+          "polling": "Polling interval"
+        },
+        "data_description": {
+          "polling": "Seconds between refreshes from TryFi. At least 60."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Authentication expired",
+        "description": "TryFi no longer accepts the password saved for {username}. Enter the current one.",
+        "data": {
+          "password": "Password"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "A Fi collar is in range. Sign in to the TryFi account it is on to add it."
+      },
+      "reconfigure": {
+        "description": "Change the email or password used to sign in to this TryFi account.",
+        "data": {
+          "username": "Email",
+          "password": "Password"
         }
       }
     },
     "error": {
-      "cannot_connect": "Cannot Connect",
-      "invalid_polling": "Invalid Polling",
-      "unknown": "Unkown Error"
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "Device Already Configured for User"
-    }
+      "reauth_successful": "Re-authentication was successful",
+      "already_configured": "Account is already configured",
+      "wrong_account": "Those details sign in to a different TryFi account. Add it as a new entry instead.",
+      "reconfigure_successful": "Re-configuration was successful"
+    },
+    "flow_title": "{name}"
   },
   "options": {
     "step": {
-        "init": {
-            "data": {
-                "polling": "Polling"
-            }
+      "init": {
+        "data": {
+          "polling": "Polling interval"
+        },
+        "data_description": {
+          "polling": "Seconds between refreshes from TryFi. At least 60. Saving reloads the integration."
         }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "collar_battery_charging": {
+        "name": "Collar battery charging"
+      }
+    },
+    "device_tracker": {
+      "tracker": {
+        "name": "Tracker"
+      }
+    },
+    "light": {
+      "collar_light": {
+        "name": "Collar light"
+      }
+    },
+    "select": {
+      "lost_mode": {
+        "name": "Lost mode"
+      }
+    },
+    "sensor": {
+      "base": {
+        "name": "Base"
+      },
+      "collar_battery_level": {
+        "name": "Collar battery level"
+      },
+      "activity_type": {
+        "name": "Activity type",
+        "state": {
+          "resting": "Resting",
+          "walking": "Walking"
+        }
+      },
+      "current_place_name": {
+        "name": "Current place name"
+      },
+      "current_place_address": {
+        "name": "Current place address"
+      },
+      "connected_to": {
+        "name": "Connected to",
+        "state": {
+          "base": "Base",
+          "wifi": "Wi-Fi",
+          "cellular": "Cellular",
+          "phone": "Owner's phone"
+        },
+        "state_attributes": {
+          "base_id": {
+            "name": "Base ID"
+          },
+          "base_name": {
+            "name": "Base"
+          },
+          "person": {
+            "name": "Person"
+          },
+          "signal_strength": {
+            "name": "Signal strength"
+          }
+        }
+      },
+      "signal_strength": {
+        "name": "Collar signal strength"
+      },
+      "daily_steps": {
+        "name": "Daily steps"
+      },
+      "daily_distance": {
+        "name": "Daily distance"
+      },
+      "daily_sleep": {
+        "name": "Daily sleep"
+      },
+      "daily_nap": {
+        "name": "Daily nap"
+      },
+      "weekly_steps": {
+        "name": "Weekly steps"
+      },
+      "weekly_distance": {
+        "name": "Weekly distance"
+      },
+      "weekly_sleep": {
+        "name": "Weekly sleep"
+      },
+      "weekly_nap": {
+        "name": "Weekly nap"
+      },
+      "monthly_steps": {
+        "name": "Monthly steps"
+      },
+      "monthly_distance": {
+        "name": "Monthly distance"
+      },
+      "monthly_sleep": {
+        "name": "Monthly sleep"
+      },
+      "monthly_nap": {
+        "name": "Monthly nap"
+      }
+    }
+  },
+  "exceptions": {
+    "auth_failed": {
+      "message": "TryFi no longer accepts the password saved for {username}."
+    },
+    "cannot_connect": {
+      "message": "TryFi could not be reached: {error}"
+    },
+    "update_failed": {
+      "message": "Error updating TryFi data: {error}"
+    },
+    "command_failed": {
+      "message": "TryFi did not accept the change to {entity}: {error}"
+    },
+    "pet_gone": {
+      "message": "The pet is no longer on the TryFi account."
     }
   }
 }

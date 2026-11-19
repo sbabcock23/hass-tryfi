@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # The integration itself has no requirements to watch: pytryfi is vendored,
+  # and the Home Assistant floor is a deliberate decision rather than
+  # something to bump automatically.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies
+
+  # The pinned lint and test tooling. Pinned so a release cannot fail an
+  # unrelated commit; watched so the pins do not quietly rot instead.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # The pin in requirements-test-min.txt selects the release carrying the
+      # oldest core this integration supports; bumping it tests a newer core
+      # twice and the old one never, which the lane then fails on its own
+      # assertion.
+      - dependency-name: pytest-homeassistant-custom-component
+      # And pycares 4.9 started a thread the 2025.1 harness reports as lingering;
+      # widening this reinstates a break that is already understood.
+      - dependency-name: pycares

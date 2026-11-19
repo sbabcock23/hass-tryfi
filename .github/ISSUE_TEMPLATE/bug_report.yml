@@ -1,0 +1,67 @@
+name: Bug Report
+description: Report a problem with the TryFi integration
+title: "[Bug]: "
+labels:
+  - bug
+assignees:
+  - willbeeching
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The most useful thing you can attach is the
+        diagnostics download: **Settings → Devices & Services → TryFi → ⋮ →
+        Download diagnostics**. It has your email, password, pet and place
+        names, and coordinates already removed.
+
+        **Never paste your TryFi password or email into an issue.**
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What area is affected?
+      options:
+        - Setup / sign-in
+        - A pet or collar missing
+        - Location / device tracker
+        - Activity stats (steps, distance, sleep, nap)
+        - Collar light or Lost Mode
+        - Data stopped updating
+        - Other
+    validations:
+      required: false
+
+  - type: input
+    id: collar
+    attributes:
+      label: Collar
+      placeholder: e.g. Fi Series 3+, Fi Mini, Series 2
+    validations:
+      required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics download
+      description: Paste the downloaded JSON, or attach the file.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: |
+        Debug logging: Settings → Devices & Services → TryFi → ⋮ → Enable debug
+        logging, reproduce, then disable it to download the log.
+      render: shell
+    validations:
+      required: false

@@ -1,8 +1,7 @@
 {
-    "config_flow": true,
-    "documentation": "https://github.com/sbabcock23/hass-pytryfi",
-    "domains": ["device_tracker", "light", "sensor", "select"],
-    "homeassistant": "2023.1.0",
-    "name": "TryFi Dog Monitor",
-    "render_readme": true
-  }
+  "name": "TryFi Dog Monitor",
+  "render_readme": true,
+  "homeassistant": "2025.1.0",
+  "zip_release": true,
+  "filename": "tryfi-hacs.zip"
+}

@@ -1,0 +1,5 @@
+# Pinned so a mypy release cannot fail an unrelated commit, and watched by
+# dependabot so the pin does not quietly rot instead. Home Assistant is
+# installed unpinned alongside this on purpose: noticing a core that
+# breaks this integration is what the lane is for.
+mypy==2.4.1

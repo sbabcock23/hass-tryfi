@@ -1,0 +1,88 @@
+{
+  "entity": {
+    "device_tracker": {
+      "tracker": {
+        "default": "mdi:paw"
+      }
+    },
+    "light": {
+      "collar_light": {
+        "default": "mdi:led-on",
+        "state": {
+          "off": "mdi:led-off"
+        }
+      }
+    },
+    "select": {
+      "lost_mode": {
+        "default": "mdi:map-search"
+      }
+    },
+    "sensor": {
+      "base": {
+        "default": "mdi:router-wireless"
+      },
+      "activity_type": {
+        "default": "mdi:paw",
+        "state": {
+          "resting": "mdi:sleep",
+          "walking": "mdi:walk"
+        }
+      },
+      "current_place_name": {
+        "default": "mdi:map-marker-radius"
+      },
+      "current_place_address": {
+        "default": "mdi:map-marker"
+      },
+      "connected_to": {
+        "default": "mdi:access-point-network",
+        "state": {
+          "base": "mdi:home-import-outline",
+          "wifi": "mdi:wifi",
+          "cellular": "mdi:signal-cellular-3",
+          "phone": "mdi:cellphone-link"
+        }
+      },
+      "signal_strength": {
+        "default": "mdi:signal"
+      },
+      "daily_steps": {
+        "default": "mdi:paw"
+      },
+      "daily_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "daily_sleep": {
+        "default": "mdi:sleep"
+      },
+      "daily_nap": {
+        "default": "mdi:power-sleep"
+      },
+      "weekly_steps": {
+        "default": "mdi:paw"
+      },
+      "weekly_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "weekly_sleep": {
+        "default": "mdi:sleep"
+      },
+      "weekly_nap": {
+        "default": "mdi:power-sleep"
+      },
+      "monthly_steps": {
+        "default": "mdi:paw"
+      },
+      "monthly_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "monthly_sleep": {
+        "default": "mdi:sleep"
+      },
+      "monthly_nap": {
+        "default": "mdi:power-sleep"
+      }
+    }
+  }
+}

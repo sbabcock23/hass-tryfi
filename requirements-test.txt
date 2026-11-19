@@ -1,0 +1,7 @@
+# The Home Assistant custom-integration test harness. It pulls in a
+# matching core, pytest, pytest-asyncio and aiohttp, so this is nearly the
+# whole list. Deliberately unpinned: the point of the lane is to notice
+# when a new core breaks this integration, which a pin would hide until
+# someone remembered to bump it.
+pytest-homeassistant-custom-component
+pytest-cov

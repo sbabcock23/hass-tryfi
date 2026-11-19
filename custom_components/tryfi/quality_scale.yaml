@@ -1,0 +1,165 @@
+# A self-assessment against Home Assistant's integration quality scale.
+#
+# This is a custom integration, so nothing here is reviewed or enforced by
+# Home Assistant. Rule names are taken from script/hassfest/quality_scale.py
+# in home-assistant/core. Each claim says what the code does, so it can be
+# checked against it.
+
+rules:
+  # ------------------------------------------------------------------ bronze
+  action-setup:
+    status: exempt
+    comment: No actions are registered; the light and select are entities.
+  appropriate-polling:
+    status: done
+    comment: >-
+      60 seconds by default and as a floor; upstream's entries at 10 are
+      raised to it. One households request plus three per pet a poll.
+  brands:
+    status: done
+    comment: The tryfi domain has assets in home-assistant/brands.
+  common-modules:
+    status: done
+    comment: coordinator.py, entity.py, and the client in client/.
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency:
+    status: exempt
+    comment: >-
+      No requirements. The TryFi client lives in client/, typed and tested
+      with the integration; it is derived from pytryfi (Apache 2.0) and its
+      origin is recorded in client/ORIGIN.md. A core integration would need it
+      published to PyPI from a public CI pipeline.
+  docs-actions:
+    status: exempt
+    comment: No actions.
+  docs-conditions:
+    status: exempt
+    comment: No conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  docs-triggers:
+    status: exempt
+    comment: No triggers.
+  entity-event-setup:
+    status: exempt
+    comment: No entity subscribes to events; all read the coordinator.
+  entity-unique-id:
+    status: done
+    comment: Upstream's unique id formats, byte for byte.
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure:
+    status: done
+    comment: >-
+      The flow signs in and reads the account before creating the entry, and
+      tells a wrong password (invalid_auth) from an unreachable TryFi.
+  test-before-setup:
+    status: done
+    comment: >-
+      Setup signs in and reads the account: ConfigEntryAuthFailed on a
+      rejected password, ConfigEntryNotReady otherwise.
+  unique-config-entry:
+    status: done
+    comment: >-
+      Keyed on TryFi's user id. Entries made by upstream, which have none, are
+      matched on their email and given the user id at setup.
+
+  # ------------------------------------------------------------------ silver
+  action-exceptions:
+    status: done
+    comment: >-
+      The light and Lost Mode raise a translated HomeAssistantError when TryFi
+      refuses or cannot be reached.
+  config-entry-unloading:
+    status: done
+    comment: Unloading closes the account's HTTP session.
+  docs-configuration-parameters: done
+  docs-installation-parameters: done
+  entity-unavailable: done
+  integration-owner: done
+  log-when-unavailable:
+    status: done
+    comment: Through the coordinator, once when updates fail and once on recovery.
+  parallel-updates:
+    status: done
+    comment: 0 for the read-only platforms, 1 for the light and the select.
+  reauthentication-flow: done
+  test-coverage:
+    status: done
+    comment: Above 95% for every module, enforced per module in CI.
+
+  # -------------------------------------------------------------------- gold
+  devices: done
+  diagnostics:
+    status: done
+    comment: >-
+      Credentials, names, places, coordinates and ids are left out; the
+      shape of what TryFi returned is kept.
+  discovery:
+    status: done
+    comment: >-
+      Bluetooth, on the service Fi collars advertise. A collar does not say
+      whose account it is on, so discovery leads to the sign-in form, and is
+      dropped once any account is set up.
+  discovery-update-info:
+    status: exempt
+    comment: >-
+      Nothing to update: the integration reaches TryFi's cloud, not the
+      collar, so a collar's Bluetooth address is not connection information.
+  docs-data-update: done
+  docs-examples: done
+  docs-known-limitations: done
+  docs-supported-devices: done
+  docs-supported-functions: done
+  docs-troubleshooting: done
+  docs-use-cases: done
+  dynamic-devices:
+    status: done
+    comment: A pet or base that appears on a refresh gets its entities then.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default:
+    status: done
+    comment: Weekly and monthly totals, and collar signal strength.
+  entity-translations: done
+  exception-translations: done
+  icon-translations: done
+  reconfiguration-flow:
+    status: done
+    comment: Email and password; refuses details for a different account.
+  repair-issues:
+    status: exempt
+    comment: >-
+      The only problem a user can fix is a rejected password, which the
+      re-authentication flow handles.
+  stale-devices:
+    status: done
+    comment: >-
+      A device is removed when TryFi stops listing its pet or base, and only
+      on a complete listing: an answer with errors beside its data, a
+      household whose pets or bases came back null, an unreadable entry, an
+      entry without a usable id, or an answer listing nothing removes
+      nothing. Ids are compared as text. A pet still listed but
+      without its collar is kept and can be deleted by hand; one deleted by
+      hand gets its entities back if it returns.
+
+  # ---------------------------------------------------------------- platinum
+  async-dependency:
+    status: done
+    comment: The client is aiohttp throughout; nothing runs in the executor.
+  inject-websession:
+    status: done
+    comment: >-
+      The session is passed in. It is the account's own, made with
+      async_create_clientsession, because TryFi signs in with a cookie and the
+      shared session's cookie jar belongs to every integration. It is
+      detached, not closed (close() on these sessions only warns): on unload,
+      on a failed setup, and after every sign-in check in the flows, whose
+      sessions are made without auto-cleanup.
+  strict-typing:
+    status: done
+    comment: >-
+      Strict mypy over the integration and its client, settings spelled out in
+      pyproject.toml; the client is marked with py.typed.

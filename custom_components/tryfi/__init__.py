@@ -1,124 +1,95 @@
-import asyncio
-import logging
-from datetime import timedelta
+"""The TryFi integration."""
 
-from homeassistant import exceptions
+from __future__ import annotations
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import discovery
-from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.event import track_time_interval
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-    UpdateFailed,
-)
-from pytryfi import PyTryFi
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import device_registry as dr
 
-from .const import (
-    CONF_PASSWORD,
-    CONF_POLLING_RATE,
-    CONF_USERNAME,
-    DEFAULT_POLLING_RATE,
-    DOMAIN,
-    PLATFORMS,
-)
-
-LOGGER = logging.getLogger(__name__)
+from .api import TryFiAuthError, TryFiError, async_connect
+from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN, PLATFORMS, account_id
+from .coordinator import TryFiConfigEntry, TryFiDataUpdateCoordinator
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
-    hass.data.setdefault(DOMAIN, {})
-    return True
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    tryfi = await hass.async_add_executor_job(PyTryFi,entry.data["username"], entry.data["password"])
-    hass.data[DOMAIN][entry.entry_id] = tryfi
-
-    # Exceptions are swallowed in the PyTryFi library, so we must assert a 
-    # sucessful login before continuing with setup. When not successful,
-    # hass will continue to retry setup
-    if not hasattr(tryfi, 'currentUser'):
-        raise ConfigEntryNotReady
-
-    coordinator = TryFiDataUpdateCoordinator(hass, tryfi, int(entry.data["polling"]))
-    await coordinator.async_config_entry_first_refresh()
-
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
-    # This creates each HA object for each platform your device requires.
-    # It's done by calling the `async_setup_entry` function in each platform module.
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    return True
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Unload a config entry."""
-    # This is called when an entry/configured device is to be removed. The class
-    # needs to unload itself, and remove callbacks. See the classes for further
-    # details
-    unload_ok = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, component)
-                for component in PLATFORMS
-            ]
-        )
-    )
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
-
-
-async def async_connect_or_timeout(hass, tryfi):
-    userId = None
+async def async_setup_entry(hass: HomeAssistant, entry: TryFiConfigEntry) -> bool:
     try:
-        userId = tryfi._userId
-        if userId != None or "":
-            LOGGER.info("Success Connecting to TryFi")
-    except Exception as err:
-        LOGGER.error("Error connecting to TryFi")
-        raise CannotConnect from err
-
-
-class CannotConnect(exceptions.HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class TryFiDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage the refresh of the tryfi data api"""
-
-    def __init__(self, hass, tryfi, pollingRate):
-        self._tryfi = tryfi
-        self._hass = hass
-        self._pollingRate = int(pollingRate)
-        super().__init__(
-            hass,
-            LOGGER,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=pollingRate),
+        client = await async_connect(
+            hass, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD]
         )
+    except TryFiAuthError as err:
+        # Starts the re-authentication flow, so a changed password asks for the
+        # new one instead of retrying the old one in the background for ever.
+        raise ConfigEntryAuthFailed(
+            translation_domain=DOMAIN,
+            translation_key="auth_failed",
+            translation_placeholders={"username": entry.data[CONF_USERNAME]},
+        ) from err
+    except TryFiError as err:
+        raise ConfigEntryNotReady(
+            translation_domain=DOMAIN,
+            translation_key="cannot_connect",
+            translation_placeholders={"error": str(err)},
+        ) from err
 
-    @property
-    def tryfi(self):
-        return self._tryfi
+    _async_adopt_unique_id(hass, entry, client.user_id)
+    coordinator = TryFiDataUpdateCoordinator(hass, entry, client)
+    # Signing in has just read every pet and base, so hand that over rather
+    # than fetching the whole account a second time straight away.
+    coordinator.async_set_updated_data(client)
+    entry.runtime_data = coordinator
 
-    @property
-    def pollingRate(self):
-        return self._pollingRate
+    entry.async_on_unload(entry.add_update_listener(_async_reload_on_change))
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
 
-    async def _async_update_data(self):
-        """Update data via library."""
-        try:
-            await self._hass.async_add_executor_job(self.tryfi.update)
-        except Exception as error:
-            LOGGER.error("Error updating TryFi data\n{error}")
-            raise UpdateFailed(error) from error
-        return self.tryfi
+
+async def async_unload_entry(hass: HomeAssistant, entry: TryFiConfigEntry) -> bool:
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unloaded:
+        # Home Assistant detaches it on unload too; doing it here does not
+        # depend on the session having been made inside setup.
+        entry.runtime_data.client.detach()
+    return unloaded
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: TryFiConfigEntry, device: dr.DeviceEntry
+) -> bool:
+    """Allow deleting a device by hand once TryFi no longer reports it.
+
+    For a pet the account still lists but cannot be read, or one whose collar
+    was taken off: automatic removal leaves those, since they may come back.
+    """
+    client = entry.runtime_data.client
+    current = {pet.pet_id for pet in client.pets} | {
+        base.base_id for base in client.bases
+    }
+    return not any(
+        domain == DOMAIN and value in current for domain, value in device.identifiers
+    )
+
+
+def _async_adopt_unique_id(
+    hass: HomeAssistant, entry: TryFiConfigEntry, user_id: str | None
+) -> None:
+    """Give an entry the account's TryFi user id as its unique id.
+
+    So the config flow can refuse a second entry for the same account. Left
+    alone if another entry already holds it, which only a duplicate made
+    before 0.1.0 could.
+    """
+    if user_id is None or entry.unique_id == user_id:
+        return
+    # None for an entry made by upstream; the login email for one given an id
+    # by 2b0fb15, before the id became TryFi's user id. Anything else is left.
+    if entry.unique_id not in (None, account_id(entry.data[CONF_USERNAME])):
+        return
+    if hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, user_id):
+        return
+    hass.config_entries.async_update_entry(entry, unique_id=user_id)
+
+
+async def _async_reload_on_change(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply a new polling rate without a restart."""
+    await hass.config_entries.async_reload(entry.entry_id)

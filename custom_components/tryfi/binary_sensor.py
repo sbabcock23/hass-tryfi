@@ -1,90 +1,45 @@
-import logging
+"""Whether each collar is on charge."""
+
+from __future__ import annotations
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
-    BinarySensorEntity
+    BinarySensorEntity,
 )
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .client import Pet
+from .coordinator import TryFiConfigEntry, TryFiDataUpdateCoordinator
+from .entity import TryFiPetEntity, async_add_per_pet
 
-LOGGER = logging.getLogger(__name__)
+# Read-only, and every reading comes from the coordinator's one refresh.
+PARALLEL_UPDATES = 0
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Add binary sensors for passed config_entry in HA."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
-    tryfi = coordinator.data
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TryFiConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_per_pet(
+        entry,
+        async_add_entities,
+        lambda pet: [TryFiBatteryChargingBinarySensor(coordinator, pet)],
+    )
 
-    new_devices = []
-    for pet in tryfi.pets:
-        LOGGER.debug(f"Adding Pet Battery Charging Binary Sensor: {pet}")
-        new_devices.append(TryFiBatteryChargingBinarySensor(hass, pet, coordinator))
-    if new_devices:
-        async_add_devices(new_devices)
 
-class TryFiBatteryChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
-    """Representation of a Binary Sensor."""
+class TryFiBatteryChargingBinarySensor(TryFiPetEntity, BinarySensorEntity):
+    _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, hass, pet, coordinator):
-        self._hass = hass
-        self._petId = pet.petId
-        super().__init__(coordinator)
-
-    @property
-    def name(self):
-        """Return the name of the binary sensor."""
-        return f"{self.pet.name} Collar Battery Charging"
-
-    @property
-    def unique_id(self):
-        """Return the ID of this sensor."""
-        return f"{self.pet.petId}-battery-charging"
+    def __init__(self, coordinator: TryFiDataUpdateCoordinator, pet: Pet) -> None:
+        super().__init__(
+            coordinator, pet, "battery-charging", "collar_battery_charging"
+        )
 
     @property
-    def petId(self):
-        return self._petId
-
-    @property
-    def pet(self):
-        return self.coordinator.data.getPet(self.petId)
-
-    @property
-    def device(self):
-        return self.pet.device
-
-    @property
-    def device_id(self):
-        return self.unique_id
-
-    @property
-    def device_class(self):
-        """Return the device class of the binary sensor."""
-        return BinarySensorDeviceClass.BATTERY_CHARGING
-
-    @property
-    def isCharging(self):
-        return bool(self.pet.device.isCharging)
-
-    @property
-    def icon(self):
-        """Return the icon for charging."""
-        if self.isCharging:
-            return "mdi:power-plug"
-        else:
-            return "mdi:power-plug-off"
-
-    @property
-    def is_on(self):
-        """Return the state of the binary sensor"""
-        return self.isCharging
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self.pet.petId)},
-            "name": self.pet.name,
-            "manufacturer": "TryFi",
-            "model": self.pet.breed,
-            "sw_version": self.pet.device.buildId,
-        }
+    def is_on(self) -> bool:
+        return self.collar.charging
