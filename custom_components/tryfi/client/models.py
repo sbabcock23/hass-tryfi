@@ -136,7 +136,8 @@ class Collar:
         ):
             try:
                 group(device)
-            except (KeyError, TypeError, ValueError) as err:
+            # OverflowError: JSON can carry Infinity, which int() refuses.
+            except (KeyError, TypeError, ValueError, OverflowError) as err:
                 LOGGER.debug(
                     "Collar %s: %s not reported (%r)",
                     self.device_id,

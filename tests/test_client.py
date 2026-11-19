@@ -282,6 +282,28 @@ async def test_rest_missing_is_unknown_and_zero_totals_are_zero(
     assert client.pets[0].nap_s["weekly"] == 20000
 
 
+async def test_an_infinite_number_costs_only_its_own_group(cloud: FakeCloud) -> None:
+    # JSON can carry Infinity, which int() refuses with OverflowError rather
+    # than ValueError. Like any other malformed field, it must cost only its
+    # own group, not the whole refresh (review of 28b06df).
+    client = await _signed_in(cloud)
+    original = cloud.rest
+
+    def infinite_sleep():  # type: ignore[no-untyped-def]
+        body = original()
+        body["dailyStat"]["restSummary"]["sleepSecondsTotal"] = float("inf")
+        return body
+
+    cloud.rest = infinite_sleep  # type: ignore[method-assign]
+    cloud.battery = float("inf")  # type: ignore[assignment]
+    cloud.daily_steps = 5555
+    await client.async_refresh()
+    pet = client.pets[0]
+    assert pet.steps["daily"] == 5555
+    assert pet.sleep_s["daily"] == 30000
+    assert pet.collar.battery_percent is None
+
+
 async def test_a_failed_account_fetch_raises_and_keeps_the_last_data(
     cloud: FakeCloud,
 ) -> None:
