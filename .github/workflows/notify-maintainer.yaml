@@ -13,7 +13,9 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Assign and notify on new issues
+      # Assigns only. The maintainer watches the repository, so a comment
+      # announcing the issue would only add noise to the thread.
+      - name: Assign on new issues
         if: github.event_name == 'issues'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -25,13 +27,6 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
               assignees: [maintainer],
-            });
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `@${maintainer} — new issue opened.`,
             });
 
       # Assigns only. It used to post an @-mention after every comment, which
