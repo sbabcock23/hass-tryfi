@@ -17,5 +17,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/sbabcock23/hass-tryfi/issues",
   "requirements": [],
-  "version": "0.1.1-beta.1"
+  "version": "0.1.1"
 }
